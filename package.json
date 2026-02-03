@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "bun --watch apps/api/src/index.ts",
     "db:generate": "cd apps/api && bun run drizzle-kit generate",
-    "db:migrate": "bun run apps/api/src/db/migrate.ts"
+    "db:migrate": "bun run apps/api/src/db/migrate.ts",
+    "test": "bun test apps/api/"
   },
   "devDependencies": {
     "@types/bun": "^1.1.13"
