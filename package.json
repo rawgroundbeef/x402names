@@ -1,0 +1,17 @@
+{
+  "name": "x402names",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun --watch apps/api/src/index.ts",
+    "db:generate": "cd apps/api && bun run drizzle-kit generate",
+    "db:migrate": "bun run apps/api/src/db/migrate.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.13"
+  }
+}

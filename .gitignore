@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+bun.lockb
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# SQLite database files
+apps/api/data/
+*.db
+*.db-wal
+*.db-shm
+
+# Build outputs
+dist/
+.turbo/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
