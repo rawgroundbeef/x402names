@@ -29,9 +29,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Infrastructure
 
 - [ ] **INFRA-01**: Abstract registrar interface with Namecheap as first implementation
-- [ ] **INFRA-02**: SQLite database with WAL mode and migration system
+- [x] **INFRA-02**: SQLite database with WAL mode and migration system
 - [ ] **INFRA-03**: x402 payment middleware via @openfacilitator/sdk
-- [ ] **INFRA-04**: Deployment support for Railway, Fly.io, and Docker self-host
+- [x] **INFRA-04**: Deployment support for Railway, Fly.io, and Docker self-host
 
 ### Hardening
 
@@ -92,9 +92,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MGMT-01 | Phase 5 | Pending |
 | MGMT-02 | Phase 3 | Pending |
 | INFRA-01 | Phase 2 | Pending |
-| INFRA-02 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 2 | Pending |
-| INFRA-04 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Complete |
 | HARD-01 | Phase 6 | Pending |
 | HARD-02 | Phase 6 | Pending |
 | HARD-03 | Phase 6 | Pending |
