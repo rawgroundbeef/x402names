@@ -30,10 +30,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Environment configuration loads from .env or environment variables
   3. Application starts successfully in development mode
   4. Deployment configuration exists for Railway, Fly.io, and Docker
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 01-01-PLAN.md -- Monorepo scaffold, env config, database layer with migrations
+- [ ] 01-02-PLAN.md -- Hono server, deployment configs, test suite
 
 ### Phase 2: Integration Layer
 **Goal**: External integrations ready for business logic to consume
@@ -116,7 +117,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/2 | Planned | - |
 | 2. Integration Layer | 0/TBD | Not started | - |
 | 3. Domain Check & Management | 0/TBD | Not started | - |
 | 4. Registration Flow | 0/TBD | Not started | - |
