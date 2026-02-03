@@ -5,7 +5,7 @@
     "buildCommand": "bun install --frozen-lockfile"
   },
   "deploy": {
-    "startCommand": "bun run src/db/migrate.ts && bun run src/index.ts",
+    "startCommand": "bun run apps/api/src/db/migrate.ts && bun run apps/api/src/index.ts",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
