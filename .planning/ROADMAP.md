@@ -45,10 +45,11 @@ Plans:
   2. Mock registrar implementation available for testing without API calls
   3. x402 payment middleware verifies payment proofs from request headers
   4. Payment verification rejects duplicate payment IDs (replay protection)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 02-01-PLAN.md -- Abstract registrar interface, Namecheap adapter, mock registrar
+- [ ] 02-02-PLAN.md -- x402 payment middleware, replay protection, payment records schema
 
 ### Phase 3: Domain Check & Management
 **Goal**: Agents can check domain availability and query domain status
@@ -118,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-02-03 |
-| 2. Integration Layer | 0/TBD | Not started | - |
+| 2. Integration Layer | 0/2 | Not started | - |
 | 3. Domain Check & Management | 0/TBD | Not started | - |
 | 4. Registration Flow | 0/TBD | Not started | - |
 | 5. URL Forwarding | 0/TBD | Not started | - |
