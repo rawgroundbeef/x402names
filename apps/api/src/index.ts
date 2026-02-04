@@ -38,7 +38,7 @@ app.route('/health', health);
 app.route('/tlds', tlds);
 
 // Mount domain routes
-app.route('/domains', createDomainRoutes(registrar, db, jobProcessor, dnsService));
+app.route('/domains', createDomainRoutes(registrar, db, jobProcessor, dnsService, domainCache));
 
 // Mount registration routes
 app.route('/registrations', createRegistrationRoutes(db));
