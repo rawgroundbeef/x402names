@@ -110,15 +110,17 @@ Plans:
   3. Target URL validation rejects malformed URLs, non-http/https schemes, and localhost
   4. All error responses include machine-readable error codes
   5. Common error scenarios documented with example responses
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 06-01-PLAN.md — Rate limiting middleware with hono-rate-limiter, applied to free read endpoints
+- [ ] 06-02-PLAN.md — URL validation with SSRF prevention, aggregated validation errors, applied to register and url-update
+- [ ] 06-03-PLAN.md — Machine-readable error catalog JSON with GET /errors endpoint
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -127,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Domain Check & Management | 2/2 | Complete | 2026-02-04 |
 | 4. Registration Flow | 2/2 | Complete | 2026-02-04 |
 | 5. URL Forwarding | 3/3 | Complete | 2026-02-04 |
-| 6. Production Hardening | 0/TBD | Not started | - |
+| 6. Production Hardening | 0/3 | Not started | - |
 
 ---
 *Last updated: 2026-02-04*
