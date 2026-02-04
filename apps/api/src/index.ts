@@ -1,20 +1,28 @@
 import { Hono } from 'hono';
 import { env } from './config/env';
-import { sqlite } from './db';
+import { sqlite, db } from './db';
 import health from './routes/health';
 import tlds from './routes/tlds';
 import { problemDetailsErrorHandler } from './lib/errors';
+import { MockRegistrar } from './integrations/registrar/mock';
+import { createDomainRoutes } from './routes/domains';
 
 const app = new Hono();
 
 // Register global error handler
 app.onError(problemDetailsErrorHandler);
 
+// Create registrar instance (MockRegistrar for development)
+const registrar = new MockRegistrar();
+
 // Mount health check route
 app.route('/health', health);
 
 // Mount TLD routes
 app.route('/tlds', tlds);
+
+// Mount domain routes
+app.route('/domains', createDomainRoutes(registrar, db));
 
 // Root endpoint
 app.get('/', (c) => {
