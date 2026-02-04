@@ -65,8 +65,8 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Domain validation, TLD pricing config, RFC 9457 error framework, TLD listing endpoint (completed 2026-02-04)
-- [ ] 03-02-PLAN.md — Availability check endpoint, domain suggestions, domain status endpoint
-- [ ] 03-03-PLAN.md — Batch domain check endpoint
+- [x] 03-02-PLAN.md — Availability check endpoint, domain suggestions, domain status endpoint (completed 2026-02-04)
+- [ ] 03-03-PLAN.md — Domain management operations
 
 ### Phase 4: Registration Flow
 **Goal**: Agents can register domains by paying USDC via x402
@@ -122,7 +122,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-02-03 |
 | 2. Integration Layer | 2/2 | Complete | 2026-02-03 |
-| 3. Domain Check & Management | 1/3 | In progress | - |
+| 3. Domain Check & Management | 2/3 | In progress | - |
 | 4. Registration Flow | 0/TBD | Not started | - |
 | 5. URL Forwarding | 0/TBD | Not started | - |
 | 6. Production Hardening | 0/TBD | Not started | - |
