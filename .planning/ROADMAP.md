@@ -77,10 +77,11 @@ Plans:
   3. Registration tracks state transitions (pending → paid → registered → live)
   4. Failed registrations after payment are automatically retried with backoff
   5. Successful registration stores domain, owner wallet, and target URL in database
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] TBD during planning
+- [ ] 04-01-PLAN.md — Registration jobs schema, job queue, and registration processor with retry
+- [ ] 04-02-PLAN.md — Registration endpoint with payment, LRO status endpoint, tests, app wiring
 
 ### Phase 5: URL Forwarding
 **Goal**: Registered domains redirect visitors to target URLs
@@ -122,7 +123,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Foundation | 2/2 | Complete | 2026-02-03 |
 | 2. Integration Layer | 2/2 | Complete | 2026-02-03 |
 | 3. Domain Check & Management | 2/2 | Complete | 2026-02-04 |
-| 4. Registration Flow | 0/TBD | Not started | - |
+| 4. Registration Flow | 0/2 | Not started | - |
 | 5. URL Forwarding | 0/TBD | Not started | - |
 | 6. Production Hardening | 0/TBD | Not started | - |
 
