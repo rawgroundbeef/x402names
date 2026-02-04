@@ -147,7 +147,7 @@ describe('POST /domains/register', () => {
 
     const data: any = await response.json();
     expect(data.type).toBe('error:validation');
-    expect(data.title).toBe('Validation Error');
+    expect(data.title).toBe('Validation Failed');
   });
 
   test('returns 400 for unsupported TLD', async () => {
@@ -304,5 +304,109 @@ describe('POST /domains/register', () => {
     // Verify job has correct wallet
     const job = sqlite.query('SELECT * FROM registration_jobs WHERE id = ?').get(data.jobId) as any;
     expect(job.owner_wallet).toBe(testWallet);
+  });
+
+  test('rejects registration with FTP targetUrl', async () => {
+    const paymentHeader = createMockPaymentHeader('0xABCDEF1234567890', 13.18);
+
+    const response = await app.request('/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'payment-signature': paymentHeader,
+      },
+      body: JSON.stringify({ domain: 'example.com', targetUrl: 'ftp://evil.com' }),
+    });
+
+    expect(response.status).toBe(400);
+
+    const data: any = await response.json();
+    expect(data.type).toBe('error:validation');
+    expect(data.title).toBe('Validation Failed');
+    expect(data.errors).toBeDefined();
+    const urlError = data.errors.find((e: any) => e.field === 'targetUrl');
+    expect(urlError).toBeDefined();
+    expect(urlError.code).toBe('URL_SCHEME_UNSUPPORTED');
+  });
+
+  test('rejects registration with private IP targetUrl', async () => {
+    const paymentHeader = createMockPaymentHeader('0xABCDEF1234567890', 13.18);
+
+    const response = await app.request('/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'payment-signature': paymentHeader,
+      },
+      body: JSON.stringify({ domain: 'example.com', targetUrl: 'http://192.168.1.1' }),
+    });
+
+    expect(response.status).toBe(400);
+
+    const data: any = await response.json();
+    expect(data.type).toBe('error:validation');
+    expect(data.errors).toBeDefined();
+    const urlError = data.errors.find((e: any) => e.field === 'targetUrl');
+    expect(urlError).toBeDefined();
+    expect(urlError.code).toBe('URL_PRIVATE_ADDRESS');
+  });
+
+  test('rejects registration with embedded credentials in targetUrl', async () => {
+    const paymentHeader = createMockPaymentHeader('0xABCDEF1234567890', 13.18);
+
+    const response = await app.request('/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'payment-signature': paymentHeader,
+      },
+      body: JSON.stringify({ domain: 'example.com', targetUrl: 'http://user:pass@example.com' }),
+    });
+
+    expect(response.status).toBe(400);
+
+    const data: any = await response.json();
+    expect(data.type).toBe('error:validation');
+    expect(data.errors).toBeDefined();
+    const urlError = data.errors.find((e: any) => e.field === 'targetUrl');
+    expect(urlError).toBeDefined();
+    expect(urlError.code).toBe('URL_CREDENTIALS_REJECTED');
+  });
+
+  test('accepts registration with valid targetUrl', async () => {
+    const paymentHeader = createMockPaymentHeader('0xABCDEF1234567890', 13.18);
+
+    const response = await app.request('/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'payment-signature': paymentHeader,
+      },
+      body: JSON.stringify({ domain: 'example.com', targetUrl: 'https://example.com' }),
+    });
+
+    expect(response.status).toBe(202);
+
+    const data: any = await response.json();
+    expect(data.jobId).toBeDefined();
+    expect(data.statusUrl).toBe(`/registrations/${data.jobId}/status`);
+  });
+
+  test('accepts registration without targetUrl', async () => {
+    const paymentHeader = createMockPaymentHeader('0xABCDEF1234567890', 13.18);
+
+    const response = await app.request('/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'payment-signature': paymentHeader,
+      },
+      body: JSON.stringify({ domain: 'example.com' }),
+    });
+
+    expect(response.status).toBe(202);
+
+    const data: any = await response.json();
+    expect(data.jobId).toBeDefined();
   });
 });

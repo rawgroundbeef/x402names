@@ -5,7 +5,8 @@ import { eq } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { decodePaymentSignatureHeader } from '@x402/core/http';
 import { domains } from '../../db/schema';
-import { createProblemResponse, validationErrorHook } from '../../lib/errors';
+import { createProblemResponse, createValidationProblem, validationErrorHook } from '../../lib/errors';
+import { validateTargetUrl } from '../../lib/validation/url';
 import { DomainCache } from '../../redirect/cache';
 import { hasPaymentBeenUsed, recordPayment } from '../../integrations/payment/replay-protection';
 
@@ -18,7 +19,7 @@ const URL_UPDATE_FEE_USDC = 2.00;
  * Request schema for URL update
  */
 const urlUpdateSchema = z.object({
-  targetUrl: z.string().url(),
+  targetUrl: z.string().min(1, 'targetUrl is required'),
 });
 
 /**
@@ -47,7 +48,38 @@ export function createUrlUpdateRoutes(
     const { targetUrl } = c.req.valid('json');
     const domainName = c.req.param('name');
 
-    // 1. Look up domain in database
+    // 1. Validate target URL
+    const urlValidation = validateTargetUrl(targetUrl);
+    if (!urlValidation.valid) {
+      const validationErrors = urlValidation.errors.map(error => {
+        let code = 'URL_VALIDATION_ERROR';
+        if (error.includes('Only HTTP and HTTPS')) {
+          code = 'URL_SCHEME_UNSUPPORTED';
+        } else if (error.includes('Localhost')) {
+          code = 'URL_LOCALHOST_REJECTED';
+        } else if (error.includes('Private IP')) {
+          code = 'URL_PRIVATE_ADDRESS';
+        } else if (error.includes('Metadata service')) {
+          code = 'URL_PRIVATE_ADDRESS';
+        } else if (error.includes('credentials')) {
+          code = 'URL_CREDENTIALS_REJECTED';
+        } else if (error.includes('maximum length')) {
+          code = 'URL_TOO_LONG';
+        } else if (error.includes('Invalid URL format')) {
+          code = 'URL_INVALID_FORMAT';
+        }
+
+        return {
+          field: 'targetUrl',
+          code,
+          message: error
+        };
+      });
+
+      return createValidationProblem(c, validationErrors);
+    }
+
+    // 2. Look up domain in database
     const domain = db
       .select()
       .from(domains)
@@ -64,7 +96,7 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 2. Extract payment header
+    // 3. Extract payment header
     const paymentHeader = c.req.header('payment-signature') || c.req.header('x-payment');
 
     if (!paymentHeader) {
@@ -77,7 +109,7 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 3. Decode payment
+    // 4. Decode payment
     let paymentPayload: any;
     try {
       paymentPayload = decodePaymentSignatureHeader(paymentHeader);
@@ -91,7 +123,7 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 4. Extract payer wallet
+    // 5. Extract payer wallet
     const payerWallet = (paymentPayload.payload as any)?.authorization?.from;
 
     if (!payerWallet) {
@@ -104,7 +136,7 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 5. Validate payment amount
+    // 6. Validate payment amount
     const paymentAmountRaw = paymentPayload.accepted?.amount
       || (paymentPayload.payload as any)?.authorization?.value;
 
@@ -130,7 +162,7 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 6. Verify ownership
+    // 7. Verify ownership
     if (domain.ownerWallet.toLowerCase() !== payerWallet.toLowerCase()) {
       return createProblemResponse(
         c,
@@ -141,7 +173,7 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 7. Idempotency check
+    // 8. Idempotency check
     if (domain.targetUrl === targetUrl) {
       return c.json({
         success: true,
@@ -152,7 +184,7 @@ export function createUrlUpdateRoutes(
       }, 200);
     }
 
-    // 8. Check payment replay protection
+    // 9. Check payment replay protection
     const paymentId = await generatePaymentId(paymentHeader);
     if (hasPaymentBeenUsed(db, paymentId)) {
       return createProblemResponse(
@@ -164,7 +196,7 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 9. Update database and record payment in transaction
+    // 10. Update database and record payment in transaction
     const previousUrl = domain.targetUrl;
 
     try {
@@ -198,10 +230,10 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 10. Invalidate cache
+    // 11. Invalidate cache
     domainCache.del(domainName);
 
-    // 11. Return success response
+    // 12. Return success response
     return c.json({
       success: true,
       updated: true,

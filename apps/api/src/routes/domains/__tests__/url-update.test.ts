@@ -270,7 +270,7 @@ describe('PATCH /domains/:name/url', () => {
 
     const data: any = await response.json();
     expect(data.type).toBe('error:validation');
-    expect(data.title).toBe('Validation Error');
+    expect(data.title).toBe('Validation Failed');
   });
 
   test('returns 400 when targetUrl is missing', async () => {
@@ -289,7 +289,7 @@ describe('PATCH /domains/:name/url', () => {
 
     const data: any = await response.json();
     expect(data.type).toBe('error:validation');
-    expect(data.title).toBe('Validation Error');
+    expect(data.title).toBe('Validation Failed');
   });
 
   test('cache is invalidated after successful update', async () => {
@@ -387,5 +387,70 @@ describe('PATCH /domains/:name/url', () => {
     const data: any = await response.json();
     expect(data.success).toBe(true);
     expect(data.updated).toBe(true);
+  });
+
+  test('rejects localhost URL', async () => {
+    const paymentHeader = createMockPaymentHeader(testOwnerWallet, 2.00);
+
+    const response = await app.request(`/domains/${testDomainName}/url`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'payment-signature': paymentHeader,
+      },
+      body: JSON.stringify({ targetUrl: 'http://localhost' }),
+    });
+
+    expect(response.status).toBe(400);
+
+    const data: any = await response.json();
+    expect(data.type).toBe('error:validation');
+    expect(data.errors).toBeDefined();
+    const urlError = data.errors.find((e: any) => e.field === 'targetUrl');
+    expect(urlError).toBeDefined();
+    expect(urlError.code).toBe('URL_LOCALHOST_REJECTED');
+  });
+
+  test('rejects javascript URL', async () => {
+    const paymentHeader = createMockPaymentHeader(testOwnerWallet, 2.00);
+
+    const response = await app.request(`/domains/${testDomainName}/url`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'payment-signature': paymentHeader,
+      },
+      body: JSON.stringify({ targetUrl: 'javascript:alert(1)' }),
+    });
+
+    expect(response.status).toBe(400);
+
+    const data: any = await response.json();
+    expect(data.type).toBe('error:validation');
+    expect(data.errors).toBeDefined();
+    const urlError = data.errors.find((e: any) => e.field === 'targetUrl');
+    expect(urlError).toBeDefined();
+    expect(urlError.code).toBe('URL_SCHEME_UNSUPPORTED');
+  });
+
+  test('accepts valid URL update', async () => {
+    const newUrl = 'https://valid-example.com';
+    const paymentHeader = createMockPaymentHeader(testOwnerWallet, 2.00);
+
+    const response = await app.request(`/domains/${testDomainName}/url`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'payment-signature': paymentHeader,
+      },
+      body: JSON.stringify({ targetUrl: newUrl }),
+    });
+
+    expect(response.status).toBe(200);
+
+    const data: any = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.updated).toBe(true);
+    expect(data.targetUrl).toBe(newUrl);
   });
 });

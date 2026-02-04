@@ -106,7 +106,7 @@ describe('POST /domains/check', () => {
     const data = await response.json();
     // RFC 9457 Problem Details format
     expect(data.type).toBe('error:validation');
-    expect(data.title).toBe('Validation Error');
+    expect(data.title).toBe('Validation Failed');
     expect(data.status).toBe(400);
   });
 
@@ -122,7 +122,7 @@ describe('POST /domains/check', () => {
     const data = await response.json();
     // RFC 9457 Problem Details format
     expect(data.type).toBe('error:validation');
-    expect(data.title).toBe('Validation Error');
+    expect(data.title).toBe('Validation Failed');
     expect(data.status).toBe(400);
     expect(data.detail).toBeDefined();
   });
@@ -141,7 +141,7 @@ describe('POST /domains/check', () => {
     const data = await response.json();
     // RFC 9457 Problem Details format
     expect(data.type).toBe('error:validation');
-    expect(data.title).toBe('Validation Error');
+    expect(data.title).toBe('Validation Failed');
     expect(data.status).toBe(400);
     expect(data.detail).toBeDefined();
   });

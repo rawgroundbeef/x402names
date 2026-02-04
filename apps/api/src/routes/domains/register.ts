@@ -6,8 +6,9 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { decodePaymentSignatureHeader } from '@x402/core/http';
 import type { DomainRegistrar } from '../../integrations/registrar/types';
 import { validateDomain } from '../../lib/validation/domain';
+import { validateTargetUrl } from '../../lib/validation/url';
 import { getTldPricing, isSupportedTld } from '../../config/tlds';
-import { createProblemResponse, validationErrorHook } from '../../lib/errors';
+import { createProblemResponse, createValidationProblem, validationErrorHook } from '../../lib/errors';
 import { registrationJobs } from '../../db/schema';
 import { hasPaymentBeenUsed, recordPayment } from '../../integrations/payment/replay-protection';
 import { enqueueJob } from '../../lib/jobs/queue';
@@ -18,7 +19,7 @@ import type { createJobProcessor } from '../../lib/jobs/registration';
  */
 const registerSchema = z.object({
   domain: z.string().min(1),
-  targetUrl: z.string().url().optional(),
+  targetUrl: z.string().optional(),
 });
 
 /**
@@ -47,19 +48,56 @@ export function createRegisterRoutes(
   router.post('/', zValidator('json', registerSchema, validationErrorHook), async (c) => {
     const { domain, targetUrl } = c.req.valid('json');
 
-    // 1. Validate domain format
-    const validation = validateDomain(domain);
-    if (!validation.valid) {
-      return createProblemResponse(
-        c,
-        400,
-        'error:validation',
-        'Validation Error',
-        validation.error || 'Invalid domain format'
-      );
+    // 1. Validate domain format and URL
+    const validationErrors: Array<{ field: string; code: string; message: string }> = [];
+
+    const domainValidation = validateDomain(domain);
+    if (!domainValidation.valid) {
+      validationErrors.push({
+        field: 'domain',
+        code: 'DOMAIN_INVALID_FORMAT',
+        message: domainValidation.error || 'Invalid domain format'
+      });
     }
 
-    const { tld } = validation;
+    // Validate target URL if provided
+    if (targetUrl) {
+      const urlValidation = validateTargetUrl(targetUrl);
+      if (!urlValidation.valid) {
+        // Map URL validation errors to error codes
+        for (const error of urlValidation.errors) {
+          let code = 'URL_VALIDATION_ERROR';
+          if (error.includes('Only HTTP and HTTPS')) {
+            code = 'URL_SCHEME_UNSUPPORTED';
+          } else if (error.includes('Localhost')) {
+            code = 'URL_LOCALHOST_REJECTED';
+          } else if (error.includes('Private IP')) {
+            code = 'URL_PRIVATE_ADDRESS';
+          } else if (error.includes('Metadata service')) {
+            code = 'URL_PRIVATE_ADDRESS';
+          } else if (error.includes('credentials')) {
+            code = 'URL_CREDENTIALS_REJECTED';
+          } else if (error.includes('maximum length')) {
+            code = 'URL_TOO_LONG';
+          } else if (error.includes('Invalid URL format')) {
+            code = 'URL_INVALID_FORMAT';
+          }
+
+          validationErrors.push({
+            field: 'targetUrl',
+            code,
+            message: error
+          });
+        }
+      }
+    }
+
+    // Return all validation errors if any exist
+    if (validationErrors.length > 0) {
+      return createValidationProblem(c, validationErrors);
+    }
+
+    const { tld } = domainValidation;
 
     // 2. Check TLD is supported
     if (!tld || !isSupportedTld(tld)) {
