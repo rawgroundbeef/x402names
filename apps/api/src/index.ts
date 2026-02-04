@@ -6,6 +6,9 @@ import tlds from './routes/tlds';
 import { problemDetailsErrorHandler } from './lib/errors';
 import { MockRegistrar } from './integrations/registrar/mock';
 import { createDomainRoutes } from './routes/domains';
+import { createRegistrationRoutes } from './routes/registrations';
+import { createJobProcessor } from './lib/jobs/registration';
+import { clearAllJobs } from './lib/jobs/queue';
 
 const app = new Hono();
 
@@ -15,6 +18,9 @@ app.onError(problemDetailsErrorHandler);
 // Create registrar instance (MockRegistrar for development)
 const registrar = new MockRegistrar();
 
+// Create job processor
+const jobProcessor = createJobProcessor(registrar, db);
+
 // Mount health check route
 app.route('/health', health);
 
@@ -22,7 +28,10 @@ app.route('/health', health);
 app.route('/tlds', tlds);
 
 // Mount domain routes
-app.route('/domains', createDomainRoutes(registrar, db));
+app.route('/domains', createDomainRoutes(registrar, db, jobProcessor));
+
+// Mount registration routes
+app.route('/registrations', createRegistrationRoutes(db));
 
 // Root endpoint
 app.get('/', (c) => {
@@ -35,6 +44,7 @@ app.get('/', (c) => {
 // Graceful shutdown handlers
 const shutdown = () => {
   console.log('Shutting down gracefully...');
+  clearAllJobs();
   sqlite.close();
   process.exit(0);
 };
