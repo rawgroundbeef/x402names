@@ -40,3 +40,23 @@ export const paymentRecords = sqliteTable('payment_records', {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+export const registrationJobs = sqliteTable('registration_jobs', {
+  id: text('id').primaryKey(),
+  domainName: text('domain_name').notNull(),
+  tld: text('tld').notNull(),
+  ownerWallet: text('owner_wallet').notNull(),
+  paymentId: text('payment_id').notNull().unique(),
+  amountPaid: text('amount_paid').notNull(),
+  targetUrl: text('target_url'),
+  state: text('state', { enum: ['processing', 'succeeded', 'failed'] }).notNull().default('processing'),
+  progress: integer('progress').default(0),
+  currentStep: text('current_step'),
+  error: text('error'),
+  errorCode: text('error_code'),
+  registrarOrderId: text('registrar_order_id'),
+  attempts: integer('attempts').default(0),
+  nextRetryAt: integer('next_retry_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+});

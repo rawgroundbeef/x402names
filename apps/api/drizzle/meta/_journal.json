@@ -15,6 +15,13 @@
       "when": 1770171751588,
       "tag": "0001_same_retro_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1770220194363,
+      "tag": "0002_rich_mandrill",
+      "breakpoints": true
     }
   ]
 }
