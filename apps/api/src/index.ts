@@ -3,6 +3,7 @@ import { env } from './config/env';
 import { sqlite, db } from './db';
 import health from './routes/health';
 import tlds from './routes/tlds';
+import errors from './routes/errors';
 import { problemDetailsErrorHandler } from './lib/errors';
 import { MockRegistrar } from './integrations/registrar/mock';
 import { createDomainRoutes } from './routes/domains';
@@ -39,6 +40,7 @@ const readLimiter = createReadLimiter();
 app.use('/', readLimiter); // Root endpoint
 app.use('/health/*', readLimiter); // Health check
 app.use('/tlds/*', readLimiter); // TLD listing/pricing
+app.use('/errors/*', readLimiter); // Error catalog
 app.use('/domains/check', readLimiter); // Availability check
 app.use('/domains/*/status', readLimiter); // Domain status
 app.use('/domains/*/dns', readLimiter); // DNS info
@@ -50,6 +52,9 @@ app.route('/health', health);
 
 // Mount TLD routes
 app.route('/tlds', tlds);
+
+// Mount error catalog route
+app.route('/errors', errors);
 
 // Mount domain routes
 app.route('/domains', createDomainRoutes(registrar, db, jobProcessor, dnsService, domainCache));

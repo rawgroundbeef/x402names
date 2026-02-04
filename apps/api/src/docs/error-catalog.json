@@ -1,0 +1,456 @@
+{
+  "version": "1.0.0",
+  "generated": "2026-02-04",
+  "categories": ["rate_limiting", "validation", "payment", "registration", "server"],
+  "errors": [
+    {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "type": "error:rate_limit_exceeded",
+      "status": 429,
+      "title": "Rate Limit Exceeded",
+      "description": "Too many requests from the client IP address. Free read endpoints are rate-limited to 100 requests per minute per IP using a sliding window.",
+      "category": "rate_limiting",
+      "retryable": true,
+      "example": {
+        "type": "error:rate_limit_exceeded",
+        "title": "Rate Limit Exceeded",
+        "status": 429,
+        "detail": "Too many requests. Please try again later."
+      },
+      "responseHeaders": {
+        "Retry-After": "60"
+      }
+    },
+    {
+      "code": "VALIDATION_ERROR",
+      "type": "error:validation",
+      "status": 400,
+      "title": "Validation Failed",
+      "description": "Generic validation error when request data fails Zod schema validation. The errors array contains all validation failures aggregated.",
+      "category": "validation",
+      "retryable": false,
+      "example": {
+        "type": "error:validation",
+        "title": "Validation Failed",
+        "status": 400,
+        "detail": "Request contains validation errors",
+        "errors": [
+          {
+            "field": "targetUrl",
+            "code": "VALIDATION_ERROR",
+            "message": "Expected string, received number"
+          }
+        ]
+      }
+    },
+    {
+      "code": "DOMAIN_INVALID_FORMAT",
+      "type": "error:validation",
+      "status": 400,
+      "title": "Validation Failed",
+      "description": "Domain name does not conform to RFC requirements: must be 1-63 characters per label, alphanumeric with hyphens (not at start/end), total length under 253 characters.",
+      "category": "validation",
+      "retryable": false,
+      "example": {
+        "type": "error:validation",
+        "title": "Validation Failed",
+        "status": 400,
+        "detail": "Request contains validation errors",
+        "errors": [
+          {
+            "field": "domain",
+            "code": "DOMAIN_INVALID_FORMAT",
+            "message": "Domain contains invalid characters"
+          }
+        ]
+      }
+    },
+    {
+      "code": "DOMAIN_UNSUPPORTED_TLD",
+      "type": "error:unsupported_tld",
+      "status": 400,
+      "title": "Unsupported TLD",
+      "description": "The top-level domain (TLD) is not in the supported list. Use GET /tlds to see all supported TLDs.",
+      "category": "registration",
+      "retryable": false,
+      "example": {
+        "type": "error:unsupported_tld",
+        "title": "Unsupported TLD",
+        "status": 400,
+        "detail": "TLD .xyz is not supported for registration"
+      }
+    },
+    {
+      "code": "URL_INVALID_FORMAT",
+      "type": "error:validation",
+      "status": 400,
+      "title": "Validation Failed",
+      "description": "The provided URL cannot be parsed. Must be a valid absolute URL with scheme and host.",
+      "category": "validation",
+      "retryable": false,
+      "example": {
+        "type": "error:validation",
+        "title": "Validation Failed",
+        "status": 400,
+        "detail": "Request contains validation errors",
+        "errors": [
+          {
+            "field": "targetUrl",
+            "code": "URL_INVALID_FORMAT",
+            "message": "Invalid URL format"
+          }
+        ]
+      }
+    },
+    {
+      "code": "URL_SCHEME_UNSUPPORTED",
+      "type": "error:validation",
+      "status": 400,
+      "title": "Validation Failed",
+      "description": "Only HTTP and HTTPS protocols are supported. Other schemes (ftp, file, data, etc.) are rejected.",
+      "category": "validation",
+      "retryable": false,
+      "example": {
+        "type": "error:validation",
+        "title": "Validation Failed",
+        "status": 400,
+        "detail": "Request contains validation errors",
+        "errors": [
+          {
+            "field": "targetUrl",
+            "code": "URL_SCHEME_UNSUPPORTED",
+            "message": "Only HTTP and HTTPS protocols are supported"
+          }
+        ]
+      }
+    },
+    {
+      "code": "URL_LOCALHOST_REJECTED",
+      "type": "error:validation",
+      "status": 400,
+      "title": "Validation Failed",
+      "description": "Localhost URLs are rejected to prevent SSRF attacks and invalid redirect targets.",
+      "category": "validation",
+      "retryable": false,
+      "example": {
+        "type": "error:validation",
+        "title": "Validation Failed",
+        "status": 400,
+        "detail": "Request contains validation errors",
+        "errors": [
+          {
+            "field": "targetUrl",
+            "code": "URL_LOCALHOST_REJECTED",
+            "message": "Localhost URLs are not allowed"
+          }
+        ]
+      }
+    },
+    {
+      "code": "URL_PRIVATE_ADDRESS",
+      "type": "error:validation",
+      "status": 400,
+      "title": "Validation Failed",
+      "description": "Private IP addresses, internal networks, and cloud metadata endpoints are blocked to prevent SSRF attacks. This includes ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16 (link-local/metadata), 127.0.0.0/8, ::1, fc00::/7, fe80::/10.",
+      "category": "validation",
+      "retryable": false,
+      "example": {
+        "type": "error:validation",
+        "title": "Validation Failed",
+        "status": 400,
+        "detail": "Request contains validation errors",
+        "errors": [
+          {
+            "field": "targetUrl",
+            "code": "URL_PRIVATE_ADDRESS",
+            "message": "Private IP addresses and internal networks are not allowed"
+          }
+        ]
+      }
+    },
+    {
+      "code": "URL_CREDENTIALS_REJECTED",
+      "type": "error:validation",
+      "status": 400,
+      "title": "Validation Failed",
+      "description": "URLs with embedded credentials (username:password@host) are rejected for security reasons.",
+      "category": "validation",
+      "retryable": false,
+      "example": {
+        "type": "error:validation",
+        "title": "Validation Failed",
+        "status": 400,
+        "detail": "Request contains validation errors",
+        "errors": [
+          {
+            "field": "targetUrl",
+            "code": "URL_CREDENTIALS_REJECTED",
+            "message": "URLs with embedded credentials are not allowed"
+          }
+        ]
+      }
+    },
+    {
+      "code": "URL_TOO_LONG",
+      "type": "error:validation",
+      "status": 400,
+      "title": "Validation Failed",
+      "description": "URL exceeds the maximum allowed length of 2048 characters.",
+      "category": "validation",
+      "retryable": false,
+      "example": {
+        "type": "error:validation",
+        "title": "Validation Failed",
+        "status": 400,
+        "detail": "Request contains validation errors",
+        "errors": [
+          {
+            "field": "targetUrl",
+            "code": "URL_TOO_LONG",
+            "message": "URL exceeds maximum length of 2048 characters"
+          }
+        ]
+      }
+    },
+    {
+      "code": "PAYMENT_REQUIRED",
+      "type": "error:payment_required",
+      "status": 402,
+      "title": "Payment Required",
+      "description": "No payment header was provided. Include either 'Payment-Signature' or 'X-Payment' header with a valid x402 payment signature.",
+      "category": "payment",
+      "retryable": true,
+      "example": {
+        "type": "error:payment_required",
+        "title": "Payment Required",
+        "status": 402,
+        "detail": "No payment header found"
+      }
+    },
+    {
+      "code": "INSUFFICIENT_PAYMENT",
+      "type": "error:insufficient_payment",
+      "status": 402,
+      "title": "Insufficient Payment",
+      "description": "Payment amount is less than required. The detail field specifies the required vs. provided amounts.",
+      "category": "payment",
+      "retryable": true,
+      "example": {
+        "type": "error:insufficient_payment",
+        "title": "Insufficient Payment",
+        "status": 402,
+        "detail": "Domain example.com requires 12.00 USDC but payment was 10.00 USDC"
+      }
+    },
+    {
+      "code": "INVALID_PAYMENT",
+      "type": "error:invalid_payment",
+      "status": 400,
+      "title": "Invalid Payment",
+      "description": "Payment header cannot be decoded or is malformed. Could indicate corrupted signature, missing fields, or invalid format.",
+      "category": "payment",
+      "retryable": false,
+      "example": {
+        "type": "error:invalid_payment",
+        "title": "Invalid Payment",
+        "status": 400,
+        "detail": "Could not decode payment header"
+      }
+    },
+    {
+      "code": "PAYMENT_ALREADY_USED",
+      "type": "error:payment_already_used",
+      "status": 409,
+      "title": "Payment Already Used",
+      "description": "This payment ID has already been processed. Payment replay protection prevents reusing the same payment signature.",
+      "category": "payment",
+      "retryable": false,
+      "example": {
+        "type": "error:payment_already_used",
+        "title": "Payment Already Used",
+        "status": 409,
+        "detail": "This payment has already been processed"
+      }
+    },
+    {
+      "code": "DOMAIN_UNAVAILABLE",
+      "type": "error:domain_unavailable",
+      "status": 409,
+      "title": "Domain Not Available",
+      "description": "Domain is already registered and not available for registration.",
+      "category": "registration",
+      "retryable": false,
+      "example": {
+        "type": "error:domain_unavailable",
+        "title": "Domain Not Available",
+        "status": 409,
+        "detail": "Domain is not available for registration"
+      }
+    },
+    {
+      "code": "DOMAIN_NOT_FOUND",
+      "type": "error:not_found",
+      "status": 404,
+      "title": "Domain Not Found",
+      "description": "Domain does not exist in the system. It may be available for registration or registered elsewhere.",
+      "category": "registration",
+      "retryable": false,
+      "example": {
+        "type": "error:not_found",
+        "title": "Domain Not Found",
+        "status": 404,
+        "detail": "Domain example.com is not registered in this system"
+      }
+    },
+    {
+      "code": "NOT_DOMAIN_OWNER",
+      "type": "error:not_domain_owner",
+      "status": 403,
+      "title": "Forbidden",
+      "description": "The wallet address in the payment does not match the domain's owner wallet. Only the domain owner can update the URL.",
+      "category": "registration",
+      "retryable": false,
+      "example": {
+        "type": "error:not_domain_owner",
+        "title": "Forbidden",
+        "status": 403,
+        "detail": "Only the domain owner can update the URL"
+      }
+    },
+    {
+      "code": "PREMIUM_DOMAIN",
+      "type": "error:premium_domain",
+      "status": 400,
+      "title": "Premium Domain Not Supported",
+      "description": "Premium domains are not currently supported for registration through this API.",
+      "category": "registration",
+      "retryable": false,
+      "example": {
+        "type": "error:premium_domain",
+        "title": "Premium Domain Not Supported",
+        "status": 400,
+        "detail": "Premium domains are not supported"
+      }
+    },
+    {
+      "code": "PRICING_NOT_AVAILABLE",
+      "type": "error:pricing_not_available",
+      "status": 400,
+      "title": "Pricing Not Available",
+      "description": "Pricing information is not configured for this TLD. Contact support if this TLD should be supported.",
+      "category": "registration",
+      "retryable": false,
+      "example": {
+        "type": "error:pricing_not_available",
+        "title": "Pricing Not Available",
+        "status": 400,
+        "detail": "Pricing information not available for TLD .com"
+      }
+    },
+    {
+      "code": "TLD_NOT_FOUND",
+      "type": "error:not_found",
+      "status": 404,
+      "title": "TLD Not Found",
+      "description": "The requested TLD does not exist in the supported TLD list.",
+      "category": "registration",
+      "retryable": false,
+      "example": {
+        "type": "error:not_found",
+        "title": "TLD Not Found",
+        "status": 404,
+        "detail": "TLD 'xyz' is not supported or does not exist"
+      }
+    },
+    {
+      "code": "JOB_NOT_FOUND",
+      "type": "error:job_not_found",
+      "status": 404,
+      "title": "Job Not Found",
+      "description": "The specified registration job ID does not exist.",
+      "category": "registration",
+      "retryable": false,
+      "example": {
+        "type": "error:job_not_found",
+        "title": "Job Not Found",
+        "status": 404,
+        "detail": "Registration job abc-123 not found"
+      }
+    },
+    {
+      "code": "INVALID_JOB_STATE",
+      "type": "error:invalid_state",
+      "status": 500,
+      "title": "Invalid Job State",
+      "description": "Registration job has an invalid or corrupted state in the database.",
+      "category": "server",
+      "retryable": false,
+      "example": {
+        "type": "error:invalid_state",
+        "title": "Invalid Job State",
+        "status": 500,
+        "detail": "Job has invalid state: corrupted"
+      }
+    },
+    {
+      "code": "SERVER_ERROR",
+      "type": "error:internal",
+      "status": 500,
+      "title": "Internal Server Error",
+      "description": "An unexpected internal error occurred. This is logged for investigation.",
+      "category": "server",
+      "retryable": true,
+      "example": {
+        "type": "error:internal",
+        "title": "Internal Server Error",
+        "status": 500,
+        "detail": "An unexpected error occurred"
+      }
+    },
+    {
+      "code": "REGISTRAR_UNAVAILABLE",
+      "type": "error:registrar_unavailable",
+      "status": 503,
+      "title": "Registrar Unavailable",
+      "description": "The upstream domain registrar service is temporarily unavailable. This is usually transient.",
+      "category": "server",
+      "retryable": true,
+      "example": {
+        "type": "error:registrar_unavailable",
+        "title": "Registrar Unavailable",
+        "status": 503,
+        "detail": "Domain registrar is temporarily unavailable"
+      }
+    },
+    {
+      "code": "REGISTRAR_ERROR",
+      "type": "error:registrar",
+      "status": 502,
+      "title": "Registrar Error",
+      "description": "The domain registrar returned an error while processing the request.",
+      "category": "server",
+      "retryable": true,
+      "example": {
+        "type": "error:registrar",
+        "title": "Registrar Error",
+        "status": 502,
+        "detail": "Registrar API returned an error"
+      }
+    },
+    {
+      "code": "REGISTRAR_AUTH_ERROR",
+      "type": "error:registrar_auth",
+      "status": 503,
+      "title": "Registrar Authentication Failed",
+      "description": "Failed to authenticate with the domain registrar. This indicates a server-side configuration issue.",
+      "category": "server",
+      "retryable": true,
+      "example": {
+        "type": "error:registrar_auth",
+        "title": "Registrar Authentication Failed",
+        "status": 503,
+        "detail": "Failed to authenticate with registrar"
+      }
+    }
+  ]
+}
