@@ -2,11 +2,19 @@ import { Hono } from 'hono';
 import { env } from './config/env';
 import { sqlite } from './db';
 import health from './routes/health';
+import tlds from './routes/tlds';
+import { problemDetailsErrorHandler } from './lib/errors';
 
 const app = new Hono();
 
+// Register global error handler
+app.onError(problemDetailsErrorHandler);
+
 // Mount health check route
 app.route('/health', health);
+
+// Mount TLD routes
+app.route('/tlds', tlds);
 
 // Root endpoint
 app.get('/', (c) => {
