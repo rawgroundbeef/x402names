@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 ## Current Position
 
 Phase: 4 of 6 (Registration Flow)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-02-04 — Completed 04-01-PLAN.md
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-02-04 — Completed 04-02-PLAN.md
 
-Progress: [█████░░░░░] 50% overall (3/6 phases complete)
+Progress: [██████████] 67% overall (4/6 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 204 seconds (3.4 minutes)
-- Total execution time: 0.40 hours
+- Total plans completed: 8
+- Average duration: 214 seconds (3.6 minutes)
+- Total execution time: 0.48 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [█████░░░░░] 50% overall (3/6 phases complete)
 | 1 - Foundation | 2 | 282s | 141s |
 | 2 - Integration Layer | 2 | 597s | 299s |
 | 3 - Domain Check Management | 2 | 475s | 238s |
-| 4 - Registration Flow | 1 | 207s | 207s |
+| 4 - Registration Flow | 2 | 474s | 237s |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (347s), 03-01 (249s), 03-02 (226s), 04-01 (207s)
-- Trend: Velocity improving in Phase 4 (207s vs ~240s average in Phase 3)
+- Last 5 plans: 03-01 (249s), 03-02 (226s), 04-01 (207s), 04-02 (267s)
+- Trend: Consistent velocity in Phase 4 (237s average, similar to Phase 3)
 
 *Updated after each plan completion*
 
@@ -72,10 +72,14 @@ Recent decisions affecting current work:
 - 04-01: In-memory job queue with setTimeout (simple async processing without external dependencies)
 - 04-01: Synchronous Drizzle operations (.run()) with type assertions (BunSQLiteDatabase<any> pattern)
 - 04-01: 3-attempt exponential backoff with 2s and 4s delays (handles transient registrar failures)
+- 04-02: Parse x402 payment header directly instead of using middleware (need full control over dynamic TLD-based pricing)
+- 04-02: Hash payment header for idempotency key (ensures same payment returns same jobId)
+- 04-02: Validate payment amount against TLD pricing before accepting (prevents insufficient payment)
+- 04-02: Defer signature verification to Phase 6 HARD-05 (focus on core flow first, add crypto verification in hardening)
 
 ### Pending Todos
 
-None yet.
+- HARD-05: Add x402 payment signature verification via facilitator (Phase 6)
 
 ### Blockers/Concerns
 
@@ -89,14 +93,23 @@ None yet.
 - Verification: 5/5 must-haves verified ✓
 - Requirements: CHECK-01, CHECK-02, CHECK-03, MGMT-02 all satisfied ✓
 
-**Phase 4 Registration Flow — IN PROGRESS**
+**Phase 4 Registration Flow — COMPLETE**
 - Plan 01 complete: Job infrastructure (queue, processor, retry logic) ✓
-- Plan 02 next: Registration endpoint with x402 payment integration
+- Plan 02 complete: Registration endpoint with x402 payment and LRO status ✓
+- Verification: All must-haves verified ✓
+- Requirements: REG-01, REG-02, REG-03, REG-04 all satisfied ✓
+- 102 tests passing (15 new registration/status tests)
+- Payment amount validation against TLD pricing working
+- HARD-05 TODO documented for Phase 6 signature verification
+
+**Phase 5 URL Forwarding — READY**
+- Domain records include targetUrl field (nullable, can be set during registration)
+- Domain status endpoint available for agents
 - No blockers
 
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 04-01-PLAN.md (Registration Job Infrastructure)
+Stopped at: Completed 04-02-PLAN.md (Registration Endpoint)
 Resume file: None
-Next action: Execute Phase 4 Plan 02 — Registration Endpoint
+Next action: Phase 4 complete — Ready for Phase 5 URL Forwarding planning
