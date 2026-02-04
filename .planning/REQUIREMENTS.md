@@ -15,11 +15,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Registration
 
-- [ ] **REG-01**: Agent can register a domain by paying USDC via x402
-- [ ] **REG-02**: Registered domain points at any user-specified URL (HTTP 301 redirect)
-- [ ] **REG-03**: Registration is idempotent (same payment ID returns same result)
-- [ ] **REG-04**: Registration tracks state transitions (pending → paid → registered → live)
-- [ ] **REG-05**: Failed registrations after payment are retried automatically
+- [x] **REG-01**: Agent can register a domain by paying USDC via x402
+- [x] **REG-02**: Registered domain points at any user-specified URL (HTTP 301 redirect)
+- [x] **REG-03**: Registration is idempotent (same payment ID returns same result)
+- [x] **REG-04**: Registration tracks state transitions (pending → paid → registered → live)
+- [x] **REG-05**: Failed registrations after payment are retried automatically
 
 ### Domain Management
 
@@ -84,11 +84,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHECK-01 | Phase 3 | Complete |
 | CHECK-02 | Phase 3 | Complete |
 | CHECK-03 | Phase 3 | Complete |
-| REG-01 | Phase 4 | Pending |
-| REG-02 | Phase 4 | Pending |
-| REG-03 | Phase 4 | Pending |
-| REG-04 | Phase 4 | Pending |
-| REG-05 | Phase 4 | Pending |
+| REG-01 | Phase 4 | Complete |
+| REG-02 | Phase 4 | Complete |
+| REG-03 | Phase 4 | Complete |
+| REG-04 | Phase 4 | Complete |
+| REG-05 | Phase 4 | Complete |
 | MGMT-01 | Phase 5 | Pending |
 | MGMT-02 | Phase 3 | Complete |
 | INFRA-01 | Phase 2 | Complete |
@@ -107,4 +107,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-04 after Phase 3 completion*
+*Last updated: 2026-02-04 after Phase 4 completion*

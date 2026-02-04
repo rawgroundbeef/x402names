@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Database, config, error handling, deployment scaffolding
 - [x] **Phase 2: Integration Layer** - Registrar interface and x402 payment middleware
 - [x] **Phase 3: Domain Check & Management** - Availability checks and status lookup
-- [ ] **Phase 4: Registration Flow** - Domain registration with payment verification
+- [x] **Phase 4: Registration Flow** - Domain registration with payment verification
 - [ ] **Phase 5: URL Forwarding** - Redirect server and DNS configuration
 - [ ] **Phase 6: Production Hardening** - Rate limiting, validation, error codes
 
@@ -80,8 +80,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Registration jobs schema, job queue, and registration processor with retry
-- [ ] 04-02-PLAN.md — Registration endpoint with payment, LRO status endpoint, tests, app wiring
+- [x] 04-01-PLAN.md — Registration jobs schema, job queue, and registration processor with retry (completed 2026-02-04)
+- [x] 04-02-PLAN.md — Registration endpoint with payment, LRO status endpoint, tests, app wiring (completed 2026-02-04)
 
 ### Phase 5: URL Forwarding
 **Goal**: Registered domains redirect visitors to target URLs
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Foundation | 2/2 | Complete | 2026-02-03 |
 | 2. Integration Layer | 2/2 | Complete | 2026-02-03 |
 | 3. Domain Check & Management | 2/2 | Complete | 2026-02-04 |
-| 4. Registration Flow | 0/2 | Not started | - |
+| 4. Registration Flow | 2/2 | Complete | 2026-02-04 |
 | 5. URL Forwarding | 0/TBD | Not started | - |
 | 6. Production Hardening | 0/TBD | Not started | - |
 
