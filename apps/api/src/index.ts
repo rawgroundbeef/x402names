@@ -12,6 +12,7 @@ import { clearAllJobs } from './lib/jobs/queue';
 import { createRedirectApp } from './redirect/server';
 import { DomainCache } from './redirect/cache';
 import { createDnsService } from './services/dns';
+import { createReadLimiter } from './lib/middleware/rate-limit';
 
 const app = new Hono();
 
@@ -30,6 +31,19 @@ const jobProcessor = createJobProcessor(registrar, db, dnsService);
 // Create domain cache and redirect server
 export const domainCache = new DomainCache();
 const redirectApp = createRedirectApp(db, domainCache);
+
+// Create rate limiter for free read endpoints
+const readLimiter = createReadLimiter();
+
+// Apply rate limiting to free read endpoints (before route mounts)
+app.use('/', readLimiter); // Root endpoint
+app.use('/health/*', readLimiter); // Health check
+app.use('/tlds/*', readLimiter); // TLD listing/pricing
+app.use('/domains/check', readLimiter); // Availability check
+app.use('/domains/*/status', readLimiter); // Domain status
+app.use('/domains/*/dns', readLimiter); // DNS info
+app.use('/domains/*/dns/verify', readLimiter); // DNS verify
+app.use('/registrations/*', readLimiter); // Registration status polling
 
 // Mount health check route
 app.route('/health', health);
