@@ -20,6 +20,11 @@ export interface ProblemDetails {
   status: number;
   detail: string;
   instance?: string;
+  errors?: Array<{
+    field: string;
+    code: string;
+    message: string;
+  }>;
 }
 
 /**
@@ -53,6 +58,38 @@ export function createProblemResponse(
   }
 
   return c.json(problem, status as any);
+}
+
+/**
+ * Create a validation problem response with aggregated errors
+ *
+ * @param c - Hono context
+ * @param errors - Array of validation errors with field, code, and message
+ * @returns JSON response with Problem Details including errors array
+ */
+export function createValidationProblem(
+  c: Context,
+  errors: Array<{ field: string; code: string; message: string }>
+) {
+  const requestId = c.req.header('x-request-id');
+
+  const problem: ProblemDetails = {
+    type: 'error:validation',
+    title: 'Validation Failed',
+    status: 400,
+    detail: 'Request contains validation errors',
+    errors: errors.map(e => ({
+      field: e.field,
+      code: e.code,
+      message: e.message
+    }))
+  };
+
+  if (requestId) {
+    problem.instance = requestId;
+  }
+
+  return c.json(problem, 400);
 }
 
 /**
@@ -145,23 +182,24 @@ export const problemDetailsErrorHandler: ErrorHandler = (err, c) => {
 
 /**
  * Validation error hook for @hono/zod-validator
- * Formats validation errors as RFC 9457 Problem Details
+ * Formats validation errors as RFC 9457 Problem Details with all errors aggregated
  */
 export const validationErrorHook: Hook<any, any, any, any> = (result, c) => {
   if (!result.success) {
     // Handle both $ZodError (runtime) and ZodError types
     const errors = 'errors' in result.error ? result.error.errors : [];
-    const firstError = errors[0];
-    const detail = firstError
-      ? `${firstError.path.join('.')}: ${firstError.message}`
-      : 'Validation failed';
+    const validationErrors = errors.map((err: any) => ({
+      field: err.path.join('.'),
+      code: 'VALIDATION_ERROR',
+      message: err.message
+    }));
 
-    return createProblemResponse(
-      c,
-      400,
-      'error:validation',
-      'Validation Error',
-      detail
-    );
+    return c.json({
+      type: 'error:validation',
+      title: 'Validation Failed',
+      status: 400,
+      detail: 'Request contains validation errors',
+      errors: validationErrors
+    }, 400);
   }
 };
