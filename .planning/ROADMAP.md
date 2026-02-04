@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Database, config, error handling, deployment scaffolding
 - [x] **Phase 2: Integration Layer** - Registrar interface and x402 payment middleware
-- [ ] **Phase 3: Domain Check & Management** - Availability checks and status lookup
+- [x] **Phase 3: Domain Check & Management** - Availability checks and status lookup
 - [ ] **Phase 4: Registration Flow** - Domain registration with payment verification
 - [ ] **Phase 5: URL Forwarding** - Redirect server and DNS configuration
 - [ ] **Phase 6: Production Hardening** - Rate limiting, validation, error codes
@@ -61,12 +61,11 @@ Plans:
   3. Agent can retrieve list of supported TLDs with pricing
   4. Agent can check registration status, owner wallet, and current URL for any domain
   5. All endpoints return structured JSON with machine-readable error codes
-**Plans**: 3 plans
+**Plans**: 2 plans
 
 Plans:
 - [x] 03-01-PLAN.md — Domain validation, TLD pricing config, RFC 9457 error framework, TLD listing endpoint (completed 2026-02-04)
 - [x] 03-02-PLAN.md — Availability check endpoint, domain suggestions, domain status endpoint (completed 2026-02-04)
-- [ ] 03-03-PLAN.md — Domain management operations
 
 ### Phase 4: Registration Flow
 **Goal**: Agents can register domains by paying USDC via x402
@@ -122,7 +121,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-02-03 |
 | 2. Integration Layer | 2/2 | Complete | 2026-02-03 |
-| 3. Domain Check & Management | 2/3 | In progress | - |
+| 3. Domain Check & Management | 2/2 | Complete | 2026-02-04 |
 | 4. Registration Flow | 0/TBD | Not started | - |
 | 5. URL Forwarding | 0/TBD | Not started | - |
 | 6. Production Hardening | 0/TBD | Not started | - |

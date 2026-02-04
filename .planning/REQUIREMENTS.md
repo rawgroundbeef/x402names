@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Domain Check
 
-- [ ] **CHECK-01**: Agent can check if a domain is available
-- [ ] **CHECK-02**: Availability response includes dynamic price in USDC based on TLD
-- [ ] **CHECK-03**: Agent can retrieve list of supported TLDs with pricing
+- [x] **CHECK-01**: Agent can check if a domain is available
+- [x] **CHECK-02**: Availability response includes dynamic price in USDC based on TLD
+- [x] **CHECK-03**: Agent can retrieve list of supported TLDs with pricing
 
 ### Registration
 
@@ -24,7 +24,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Domain Management
 
 - [ ] **MGMT-01**: Agent can update where a domain points (x402 payment, small fee)
-- [ ] **MGMT-02**: Agent can check registration status, owner, and current URL for any domain
+- [x] **MGMT-02**: Agent can check registration status, owner, and current URL for any domain
 
 ### Infrastructure
 
@@ -81,16 +81,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CHECK-01 | Phase 3 | Pending |
-| CHECK-02 | Phase 3 | Pending |
-| CHECK-03 | Phase 3 | Pending |
+| CHECK-01 | Phase 3 | Complete |
+| CHECK-02 | Phase 3 | Complete |
+| CHECK-03 | Phase 3 | Complete |
 | REG-01 | Phase 4 | Pending |
 | REG-02 | Phase 4 | Pending |
 | REG-03 | Phase 4 | Pending |
 | REG-04 | Phase 4 | Pending |
 | REG-05 | Phase 4 | Pending |
 | MGMT-01 | Phase 5 | Pending |
-| MGMT-02 | Phase 3 | Pending |
+| MGMT-02 | Phase 3 | Complete |
 | INFRA-01 | Phase 2 | Complete |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 2 | Complete |
@@ -107,4 +107,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-04 after Phase 2 completion*
+*Last updated: 2026-02-04 after Phase 3 completion*
