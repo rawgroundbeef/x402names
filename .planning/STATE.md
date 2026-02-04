@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Agent registers domain and points it at content with single API call and USDC payment.
-**Current focus:** Phase 1 complete, ready for Phase 2
+**Current focus:** Phase 2 complete, ready for Phase 3
 
 ## Current Position
 
@@ -14,7 +14,7 @@ Plan: 2 of 2 complete
 Status: Phase complete
 Last activity: 2026-02-04 — Completed 02-02-PLAN.md
 
-Progress: [████████░░] 100% overall (4/4 plans)
+Progress: [████░░░░░░] 33% overall (2/6 phases)
 
 ## Performance Metrics
 

@@ -13,7 +13,7 @@ Build an agent-first domain registration API where agents pay USDC to register d
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Database, config, error handling, deployment scaffolding
-- [ ] **Phase 2: Integration Layer** - Registrar interface and x402 payment middleware
+- [x] **Phase 2: Integration Layer** - Registrar interface and x402 payment middleware
 - [ ] **Phase 3: Domain Check & Management** - Availability checks and status lookup
 - [ ] **Phase 4: Registration Flow** - Domain registration with payment verification
 - [ ] **Phase 5: URL Forwarding** - Redirect server and DNS configuration
@@ -48,8 +48,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Abstract registrar interface, Namecheap adapter, mock registrar
-- [ ] 02-02-PLAN.md -- x402 payment middleware, replay protection, payment records schema
+- [x] 02-01-PLAN.md -- Abstract registrar interface, Namecheap adapter, mock registrar (completed 2026-02-03)
+- [x] 02-02-PLAN.md -- x402 payment middleware, replay protection, payment records schema (completed 2026-02-03)
 
 ### Phase 3: Domain Check & Management
 **Goal**: Agents can check domain availability and query domain status
@@ -119,11 +119,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-02-03 |
-| 2. Integration Layer | 0/2 | Not started | - |
+| 2. Integration Layer | 2/2 | Complete | 2026-02-03 |
 | 3. Domain Check & Management | 0/TBD | Not started | - |
 | 4. Registration Flow | 0/TBD | Not started | - |
 | 5. URL Forwarding | 0/TBD | Not started | - |
 | 6. Production Hardening | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-02-03*
+*Last updated: 2026-02-04*
