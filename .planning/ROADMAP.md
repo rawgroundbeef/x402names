@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Integration Layer** - Registrar interface and x402 payment middleware
 - [x] **Phase 3: Domain Check & Management** - Availability checks and status lookup
 - [x] **Phase 4: Registration Flow** - Domain registration with payment verification
-- [ ] **Phase 5: URL Forwarding** - Redirect server and DNS configuration
+- [x] **Phase 5: URL Forwarding** - Redirect server and DNS configuration
 - [ ] **Phase 6: Production Hardening** - Rate limiting, validation, error codes
 
 ## Phase Details
@@ -96,9 +96,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Redirect server with host-based routing, domain cache, holding and landing pages
-- [ ] 05-02-PLAN.md — DNS auto-configuration service, DNS info and verify endpoints
-- [ ] 05-03-PLAN.md — URL update endpoint with x402 payment, ownership verification, idempotency
+- [x] 05-01-PLAN.md — Redirect server with host-based routing, domain cache, holding and landing pages (completed 2026-02-04)
+- [x] 05-02-PLAN.md — DNS auto-configuration service, DNS info and verify endpoints (completed 2026-02-04)
+- [x] 05-03-PLAN.md — URL update endpoint with x402 payment, ownership verification, idempotency (completed 2026-02-04)
 
 ### Phase 6: Production Hardening
 **Goal**: API is production-ready with validation and rate limiting
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Integration Layer | 2/2 | Complete | 2026-02-03 |
 | 3. Domain Check & Management | 2/2 | Complete | 2026-02-04 |
 | 4. Registration Flow | 2/2 | Complete | 2026-02-04 |
-| 5. URL Forwarding | 0/3 | Planned | - |
+| 5. URL Forwarding | 3/3 | Complete | 2026-02-04 |
 | 6. Production Hardening | 0/TBD | Not started | - |
 
 ---

@@ -23,7 +23,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Domain Management
 
-- [ ] **MGMT-01**: Agent can update where a domain points (x402 payment, small fee)
+- [x] **MGMT-01**: Agent can update where a domain points (x402 payment, small fee)
 - [x] **MGMT-02**: Agent can check registration status, owner, and current URL for any domain
 
 ### Infrastructure
@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REG-03 | Phase 4 | Complete |
 | REG-04 | Phase 4 | Complete |
 | REG-05 | Phase 4 | Complete |
-| MGMT-01 | Phase 5 | Pending |
+| MGMT-01 | Phase 5 | Complete |
 | MGMT-02 | Phase 3 | Complete |
 | INFRA-01 | Phase 2 | Complete |
 | INFRA-02 | Phase 1 | Complete |
@@ -107,4 +107,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-04 after Phase 4 completion*
+*Last updated: 2026-02-04 after Phase 5 completion*
