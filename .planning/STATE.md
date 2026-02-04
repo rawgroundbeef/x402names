@@ -9,30 +9,30 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 ## Current Position
 
-Phase: 2 of 6 (Integration Layer) — IN PROGRESS
-Plan: 1 of 2 complete
-Status: Phase in progress
-Last activity: 2026-02-04 — Completed 02-01-PLAN.md
+Phase: 2 of 6 (Integration Layer) — COMPLETE ✓
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-02-04 — Completed 02-02-PLAN.md
 
-Progress: [███████░░░] 75% overall (3/4 plans)
+Progress: [████████░░] 100% overall (4/4 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 161 seconds (2.7 minutes)
-- Total execution time: 0.13 hours
+- Total plans completed: 4
+- Average duration: 179 seconds (3.0 minutes)
+- Total execution time: 0.20 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 - Foundation | 2 | 282s | 141s |
-| 2 - Integration Layer | 1 | 250s | 250s |
+| 2 - Integration Layer | 2 | 597s | 299s |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (115s), 01-02 (167s), 02-01 (250s)
-- Trend: Increasing task complexity with integration work
+- Last 5 plans: 01-01 (115s), 01-02 (167s), 02-01 (250s), 02-02 (347s)
+- Trend: Integration layer plans averaging 2.5x foundation plans (external API complexity)
 
 *Updated after each plan completion*
 
@@ -56,6 +56,9 @@ Recent decisions affecting current work:
 - 02-01: Regex XML parsing for Namecheap (minimal dependencies, simple responses)
 - 02-01: exec() loop over matchAll() for regex iteration (broader TypeScript compatibility)
 - 02-01: Mock registrar uses "taken-" prefix for unavailable domains (deterministic testing)
+- 02-02: payTo address configured per-route, not globally (x402 PaymentOption includes payTo field)
+- 02-02: Use paymentMiddleware directly with configured server (simpler than paymentMiddlewareFromConfig)
+- 02-02: BunSQLiteDatabase<any> type parameter (allows test database instances without schema type constraint)
 
 ### Pending Todos
 
@@ -63,13 +66,17 @@ None yet.
 
 ### Blockers/Concerns
 
-**Phase 2 external dependencies:**
-- @openfacilitator/sdk API documentation needed for x402 middleware implementation (02-02)
+**Phase 2 Integration Layer — COMPLETE**
+- x402 middleware implementation complete (@x402/hono, @x402/core, @x402/evm packages) ✓
 - Namecheap credentials needed for production (development OK with MockRegistrar) ✓ DOCUMENTED
+
+**Phase 3 Domain Operations ready to begin:**
+- No known blockers
+- All integration dependencies available
 
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 02-01-PLAN.md (Registrar Interface & Implementations)
+Stopped at: Phase 2 Integration Layer complete (02-01 Registrar, 02-02 Payment)
 Resume file: None
-Next action: Execute 02-02-PLAN.md (x402 Payment Middleware)
+Next action: Plan Phase 3 — Domain Operations (pricing, validation, availability)
