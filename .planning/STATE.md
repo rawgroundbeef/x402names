@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 ## Current Position
 
-Phase: 5 of 6 (URL Forwarding) — COMPLETE ✓
-Plan: 3 of 3 complete
-Status: Phase complete, verified
-Last activity: 2026-02-04 — Phase 5 verified (14/14 must-haves)
+Phase: 6 of 6 (Production Hardening) — IN PROGRESS
+Plan: 1 of 3 complete
+Status: In progress
+Last activity: 2026-02-04 — Completed 06-01-PLAN.md
 
-Progress: [████████░░] 83% overall (5/6 phases)
+Progress: [█████████░] 87% overall (11/13 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 231 seconds (3.9 minutes)
-- Total execution time: 0.71 hours
+- Total plans completed: 12
+- Average duration: 225 seconds (3.8 minutes)
+- Total execution time: 0.75 hours
 
 **By Phase:**
 
@@ -32,6 +32,7 @@ Progress: [████████░░] 83% overall (5/6 phases)
 | 3 - Domain Check Management | 2 | 475s | 238s |
 | 4 - Registration Flow | 2 | 474s | 237s |
 | 5 - URL Forwarding | 3 | 917s | 306s |
+| 6 - Production Hardening | 1 | 142s | 142s |
 
 *Updated after each plan completion*
 
@@ -52,6 +53,10 @@ Recent decisions affecting current work:
 - 05-03: Wallet-based ownership verification via case-insensitive comparison
 - 05-03: Idempotent updates return updated: false with reason
 - 05-03: Cache invalidation after database update
+- 06-01: 100 req/min/IP sliding window rate limiting for read endpoints
+- 06-01: Paid endpoints excluded from rate limiting (payment is natural throttle)
+- 06-01: IP extraction via BEHIND_PROXY env var for proxy deployments
+- 06-01: RFC 9457 429 responses with Retry-After header
 
 ### Pending Todos
 
@@ -65,16 +70,16 @@ Recent decisions affecting current work:
 - Plan 03: URL updates ($2.00 USDC, wallet ownership, cache invalidation) ✓
 - Verification: 14/14 must-haves verified ✓
 - Requirements: MGMT-01 satisfied ✓
-- 138 tests passing
 
-**Phase 6 Production Hardening — READY**
-- All API endpoints exist and functional
-- Error framework (RFC 9457) already in place from Phase 3
+**Phase 6 Production Hardening — IN PROGRESS**
+- Plan 01: Rate limiting middleware ✓ (144 tests passing)
+- Plan 02: Input validation (pending)
+- Plan 03: Error documentation (pending)
 - No blockers
 
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Phase 5 URL Forwarding complete and verified
+Stopped at: Completed 06-01-PLAN.md (Rate limiting middleware)
 Resume file: None
-Next action: Plan Phase 6 — Production Hardening (rate limiting, validation, error codes)
+Next action: Execute 06-02-PLAN.md (Input validation)
