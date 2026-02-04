@@ -6,6 +6,7 @@ import tlds from './routes/tlds';
 import errors from './routes/errors';
 import { problemDetailsErrorHandler } from './lib/errors';
 import { MockRegistrar } from './integrations/registrar/mock';
+import { NamecheapRegistrar } from './integrations/registrar/namecheap';
 import { createDomainRoutes } from './routes/domains';
 import { createRegistrationRoutes } from './routes/registrations';
 import { createJobProcessor } from './lib/jobs/registration';
@@ -20,8 +21,15 @@ const app = new Hono();
 // Register global error handler
 app.onError(problemDetailsErrorHandler);
 
-// Create registrar instance (MockRegistrar for development)
-const registrar = new MockRegistrar();
+// Create registrar instance (Namecheap when configured, otherwise MockRegistrar)
+const registrar = env.NAMECHEAP_API_USER
+  ? new NamecheapRegistrar(
+      env.NAMECHEAP_API_USER,
+      env.NAMECHEAP_API_KEY,
+      env.NAMECHEAP_CLIENT_IP,
+      env.NAMECHEAP_SANDBOX
+    )
+  : new MockRegistrar();
 
 // Create DNS service
 const dnsService = createDnsService(registrar, env.REDIRECT_SERVER_IP);
