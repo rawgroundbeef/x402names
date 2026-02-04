@@ -31,7 +31,7 @@ export interface PaymentRecord {
  * @returns true if payment has been used, false otherwise
  */
 export function hasPaymentBeenUsed(
-  db: BunSQLiteDatabase,
+  db: BunSQLiteDatabase<any>,
   paymentId: string
 ): boolean {
   const result = db
@@ -54,7 +54,7 @@ export function hasPaymentBeenUsed(
  * The SQLite UNIQUE constraint on payment_id provides atomic duplicate detection.
  */
 export function recordPayment(
-  db: BunSQLiteDatabase,
+  db: BunSQLiteDatabase<any>,
   payment: PaymentRecord
 ): void {
   try {
