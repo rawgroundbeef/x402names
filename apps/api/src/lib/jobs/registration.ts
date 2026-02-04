@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { registrationJobs, domains } from '../../db/schema';
 import type { DomainRegistrar, ContactInfo } from '../../integrations/registrar/types';
+import type { DnsService } from '../../services/dns';
 import { env } from '../../config/env';
 import { validateDomain } from '../validation/domain';
 import { enqueueJob } from './queue';
@@ -39,11 +40,13 @@ export function getDefaultContactInfo(): ContactInfo {
  *
  * @param registrar - DomainRegistrar implementation
  * @param db - Database instance
+ * @param dnsService - Optional DNS service for automatic DNS configuration
  * @returns Object with processJob method
  */
 export function createJobProcessor(
   registrar: DomainRegistrar,
-  db: BunSQLiteDatabase<any>
+  db: BunSQLiteDatabase<any>,
+  dnsService?: DnsService
 ) {
   /**
    * Process a single registration job
@@ -120,6 +123,38 @@ export function createJobProcessor(
           registrarOrderId: result.orderId || result.transactionId,
         } as any)
         .run();
+
+      // Step 4: Configure DNS (if DNS service is available)
+      let finalStatus: 'registered' | 'live' = 'registered';
+      if (dnsService) {
+        try {
+          db.update(registrationJobs)
+            .set({
+              progress: 80,
+              currentStep: 'dns_configuring',
+            } as any)
+            .where(eq(registrationJobs.id, jobId))
+            .run();
+
+          await dnsService.configureDomain(job.domainName);
+
+          // Update domain status to 'live' after successful DNS configuration
+          db.update(domains)
+            .set({ status: 'live' } as any)
+            .where(eq(domains.name, job.domainName))
+            .run();
+
+          finalStatus = 'live';
+        } catch (dnsError) {
+          // Log DNS error but do NOT fail the registration
+          // Domain is successfully registered with the registrar; DNS is a best-effort enhancement
+          console.warn(
+            `DNS configuration failed for ${job.domainName}:`,
+            dnsError instanceof Error ? dnsError.message : dnsError
+          );
+          // Keep domain status as 'registered' - DNS can be retried later
+        }
+      }
 
       // Mark job as succeeded
       db.update(registrationJobs)
