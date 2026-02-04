@@ -8,6 +8,7 @@ export const env = cleanEnv(process.env, {
   PORT: port({ default: 3000 }),
   REDIRECT_PORT: port({ default: 3001 }),
   REDIRECT_SERVER_IP: str({ default: '127.0.0.1' }),
+  BEHIND_PROXY: bool({ default: false }),
   DATABASE_URL: str({ default: './data/app.db' }),
   LOG_LEVEL: str({
     choices: ['debug', 'info', 'warn', 'error'],
