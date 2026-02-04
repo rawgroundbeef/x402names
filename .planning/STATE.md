@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 ## Current Position
 
-Phase: 4 of 6 (Registration Flow) — COMPLETE ✓
-Plan: 2 of 2 complete
-Status: Phase complete, verified
-Last activity: 2026-02-04 — Phase 4 verified (11/11 must-haves)
+Phase: 5 of 6 (URL Forwarding) — IN PROGRESS
+Plan: 1 of 4 complete
+Status: Plan 01 complete - Redirect server operational
+Last activity: 2026-02-04 — Completed 05-01-PLAN.md (multi-domain redirect server)
 
-Progress: [██████░░░░] 67% overall (4/6 phases)
+Progress: [███████░░░] 75% overall (4.25/6 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 214 seconds (3.6 minutes)
-- Total execution time: 0.48 hours
+- Total plans completed: 9
+- Average duration: 220 seconds (3.7 minutes)
+- Total execution time: 0.55 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [██████░░░░] 67% overall (4/6 phases)
 | 2 - Integration Layer | 2 | 597s | 299s |
 | 3 - Domain Check Management | 2 | 475s | 238s |
 | 4 - Registration Flow | 2 | 474s | 237s |
+| 5 - URL Forwarding | 1 | 270s | 270s |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (249s), 03-02 (226s), 04-01 (207s), 04-02 (267s)
-- Trend: Consistent velocity in Phase 4 (237s average, similar to Phase 3)
+- Last 5 plans: 03-02 (226s), 04-01 (207s), 04-02 (267s), 05-01 (270s)
+- Trend: Consistent velocity maintained, Phase 5 start similar to Phase 4 average
 
 *Updated after each plan completion*
 
@@ -76,6 +77,10 @@ Recent decisions affecting current work:
 - 04-02: Hash payment header for idempotency key (ensures same payment returns same jobId)
 - 04-02: Validate payment amount against TLD pricing before accepting (prevents insufficient payment)
 - 04-02: Defer signature verification to Phase 6 HARD-05 (focus on core flow first, add crypto verification in hardening)
+- 05-01: In-memory cache with 300s TTL for domain-to-URL mappings (balances update propagation with cache performance)
+- 05-01: Host-based routing via Hono getPath function (single app handles multiple domains)
+- 05-01: Separate redirect server on port 3001 (isolates public traffic from authenticated API)
+- 05-01: ACME check inside domain handler (Hono wildcard routing prevents separate route from matching)
 
 ### Pending Todos
 
@@ -102,14 +107,18 @@ Recent decisions affecting current work:
 - Payment amount validation against TLD pricing working
 - HARD-05 TODO documented for Phase 6 signature verification
 
-**Phase 5 URL Forwarding — READY**
-- Domain records include targetUrl field (nullable, can be set during registration)
-- Domain status endpoint available for agents
-- No blockers
+**Phase 5 URL Forwarding — IN PROGRESS**
+- Plan 01 complete: Multi-domain redirect server operational ✓
+- Redirect server: 301 redirects with path/query preservation, holding/landing pages ✓
+- Cache: In-memory domain-to-URL cache with 300s TTL ✓
+- Tests: 120 tests passing (102 existing + 18 new redirect tests) ✓
+- Plan 02 ready: DNS configuration endpoints (redirect server provides REDIRECT_SERVER_IP)
+- Plan 03 ready: URL updates (domainCache exported for invalidation)
+- Plan 04 ready: SSL provisioning (ACME challenge route placeholder exists)
 
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Phase 4 Registration Flow complete and verified
+Stopped at: Completed 05-01-PLAN.md (multi-domain redirect server with caching)
 Resume file: None
-Next action: Plan Phase 5 — URL Forwarding (redirect server and DNS configuration)
+Next action: Execute Plan 05-02 — DNS Configuration (Namecheap API integration for automatic DNS setup)
