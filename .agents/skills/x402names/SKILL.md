@@ -51,11 +51,11 @@ The register endpoint uses a Long-Running Operation (LRO) pattern. After getting
 
 ```
 Step 1: Check current domain status
-  GET /domains/:name/status
+  GET /domains/:domain/status
   → Confirms domain exists and shows current targetUrl
 
 Step 2: Update URL (requires x402 payment of 2.00 USDC)
-  PATCH /domains/:name/url
+  PATCH /domains/:domain/url
   Headers: Payment-Signature: <x402-payment>
   Body: {"targetUrl": "https://new-destination.com"}
   → Returns 402 if no/insufficient payment
@@ -71,11 +71,11 @@ The payer wallet extracted from the payment header must match the domain's owner
 
 ```
 Step 1: Get DNS configuration info
-  GET /domains/:name/dns
+  GET /domains/:domain/dns
   → Returns expected A records and setup instructions
 
 Step 2: Verify DNS propagation
-  GET /domains/:name/dns/verify
+  GET /domains/:domain/dns/verify
   → Returns verified: true/false with resolved IPs vs expected
 ```
 
@@ -91,14 +91,40 @@ DNS changes can take up to 48 hours to propagate globally.
 
 **Non-retryable errors**: Validation errors (400), payment errors (402/409), domain conflicts (409). Fix the request before retrying.
 
-## Payment Header Format
+**Payment failure handling**: If registration fails after payment is accepted (e.g., registrar error), the job moves to `state: "failed"` with an error code. The payment is recorded but not consumed for a successful registration — you can contact the operator for resolution. The system retries registrar failures up to 3 times with exponential backoff before marking a job as failed. Payment replay protection means the same payment header always returns the same job, so retrying a request is safe.
 
-x402 payments are passed via the `Payment-Signature` or `X-Payment` header. The payment contains:
-- **from**: Payer wallet address (used for ownership verification)
-- **value/amount**: Payment amount in token base units (1 USDC = 1,000,000 units)
-- **network**: EVM chain identifier (default: `eip155:84532` for Base Sepolia)
+## Making Payments
 
-Payment amounts are specified in USDC. Registration prices vary by TLD (check `GET /tlds`). URL updates cost a flat 2.00 USDC.
+Use `@x402/fetch` to make paid requests. It wraps `fetch` and handles payment header construction automatically:
+
+```typescript
+import { wrapFetch } from "@x402/fetch";
+import { createWalletClient, http } from "viem";
+import { baseSepolia } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+
+const account = privateKeyToAccount("0xYOUR_PRIVATE_KEY");
+const walletClient = createWalletClient({
+  account,
+  chain: baseSepolia,
+  transport: http(),
+});
+
+const fetchWithPayment = wrapFetch(fetch, walletClient);
+
+// Register a domain — payment is handled automatically
+const res = await fetchWithPayment("https://x402names.example/domains/register", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ domain: "coolproject.com", targetUrl: "https://mysite.com" }),
+});
+```
+
+`@x402/fetch` reads the 402 response, constructs the payment header with the required amount, signs it with your wallet, and retries the request. No manual header construction needed.
+
+**Payment details**: Registration prices vary by TLD (check `GET /tlds`). URL updates cost a flat 2.00 USDC. All prices are in USDC on Base Sepolia (network `eip155:84532`).
+
+**Your wallet address becomes your identity** — the payer wallet is recorded as the domain owner. Use the same wallet for future URL updates.
 
 ## All Errors Use RFC 9457 Problem Details
 

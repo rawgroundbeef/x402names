@@ -236,11 +236,11 @@ If the domain is not in the local database, the registrar is queried. If the reg
 
 ## Domain DNS
 
-### GET /domains/:name/dns
+### GET /domains/:domain/dns
 
 Get DNS configuration info for a registered domain. No auth required.
 
-`:name` is the domain name as stored (e.g., the SLD like `example` or full domain depending on registration).
+`:domain` is the domain name as stored in the system.
 
 **Response 200**:
 ```json
@@ -267,7 +267,7 @@ Get DNS configuration info for a registered domain. No auth required.
 
 ## Domain DNS Verify
 
-### GET /domains/:name/dns/verify
+### GET /domains/:domain/dns/verify
 
 Verify DNS propagation. No auth required.
 
@@ -290,7 +290,7 @@ Verify DNS propagation. No auth required.
 
 ## Domain URL Update
 
-### PATCH /domains/:name/url
+### PATCH /domains/:domain/url
 
 Update a domain's target URL. **Requires x402 payment of 2.00 USDC.**
 
@@ -453,13 +453,58 @@ Payment amounts in the x402 header are in **token base units**:
 - 1 USDC = 1,000,000 base units
 - To pay 13.18 USDC, the header value field should contain `13180000`
 
-### Payment Flow
-1. Client constructs x402 payment with required USDC amount
-2. Payment header includes payer wallet address (`from` field)
-3. Server decodes header, extracts wallet and amount
-4. Server verifies amount >= required price
-5. Payment ID (SHA-256 of header) is recorded for replay protection
-6. Same payment header on retry returns the existing job (idempotent)
+### Making Payments with @x402/fetch
+
+The easiest way to make paid requests is with `@x402/fetch`, which handles the 402 handshake automatically:
+
+```typescript
+import { wrapFetch } from "@x402/fetch";
+import { createWalletClient, http } from "viem";
+import { baseSepolia } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+
+const account = privateKeyToAccount("0xYOUR_PRIVATE_KEY");
+const walletClient = createWalletClient({
+  account,
+  chain: baseSepolia,
+  transport: http(),
+});
+
+const fetchWithPayment = wrapFetch(fetch, walletClient);
+
+// Register — @x402/fetch handles the 402 → pay → retry cycle
+const res = await fetchWithPayment("https://x402names.example/domains/register", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ domain: "coolproject.com", targetUrl: "https://mysite.com" }),
+});
+
+// Update URL
+const updateRes = await fetchWithPayment("https://x402names.example/domains/coolproject.com/url", {
+  method: "PATCH",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ targetUrl: "https://new-site.com" }),
+});
+```
+
+### Payment Flow (under the hood)
+1. Client sends request without payment header
+2. Server responds with 402 including required amount
+3. `@x402/fetch` constructs payment with the required USDC amount
+4. Payment header includes payer wallet address (`from` field)
+5. `@x402/fetch` retries the request with the payment header
+6. Server decodes header, extracts wallet and amount
+7. Server verifies amount >= required price
+8. Payment ID (SHA-256 of header) is recorded for replay protection
+9. Same payment header on retry returns the existing job (idempotent)
+
+### Payment Failure Handling
+If registration fails after payment is accepted (e.g., registrar outage):
+- The job retries up to 3 times with exponential backoff
+- Job moves to `state: "failed"` only after all retries are exhausted
+- The payment is recorded but not consumed for a successful registration
+- Replaying the same request (same payment header) returns the existing job — safe to retry
+- For failed jobs where payment was taken, contact the operator for resolution
 
 ### Wallet Ownership
 For URL updates, the payer wallet from the payment header must match the domain's `ownerWallet` (case-insensitive comparison). This prevents unauthorized modifications.
