@@ -11,6 +11,7 @@ import { createJobProcessor } from './lib/jobs/registration';
 import { clearAllJobs } from './lib/jobs/queue';
 import { createRedirectApp } from './redirect/server';
 import { DomainCache } from './redirect/cache';
+import { createDnsService } from './services/dns';
 
 const app = new Hono();
 
@@ -20,8 +21,11 @@ app.onError(problemDetailsErrorHandler);
 // Create registrar instance (MockRegistrar for development)
 const registrar = new MockRegistrar();
 
-// Create job processor
-const jobProcessor = createJobProcessor(registrar, db);
+// Create DNS service
+const dnsService = createDnsService(registrar, env.REDIRECT_SERVER_IP);
+
+// Create job processor with DNS service
+const jobProcessor = createJobProcessor(registrar, db, dnsService);
 
 // Create domain cache and redirect server
 export const domainCache = new DomainCache();
@@ -34,7 +38,7 @@ app.route('/health', health);
 app.route('/tlds', tlds);
 
 // Mount domain routes
-app.route('/domains', createDomainRoutes(registrar, db, jobProcessor));
+app.route('/domains', createDomainRoutes(registrar, db, jobProcessor, dnsService));
 
 // Mount registration routes
 app.route('/registrations', createRegistrationRoutes(db));

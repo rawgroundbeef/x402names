@@ -45,9 +45,10 @@ export interface DnsVerificationResult {
  * DNS service interface
  */
 export interface DnsService {
+  readonly serverIp: string;
   configureDomain(domain: string): Promise<DnsConfigResult>;
-  getDnsInfo(domain: string, serverIp: string): DnsInfo;
-  verifyDns(domain: string, serverIp: string): Promise<DnsVerificationResult>;
+  getDnsInfo(domain: string): DnsInfo;
+  verifyDns(domain: string): Promise<DnsVerificationResult>;
 }
 
 /**
@@ -59,7 +60,7 @@ export interface DnsService {
  */
 export function createDnsService(
   registrar: DomainRegistrar,
-  serverIp: string
+  ipAddress: string
 ): DnsService {
   /**
    * Configure DNS A records for a domain using read-modify-write pattern
@@ -78,8 +79,8 @@ export function createDnsService(
 
     // Step 3: Create new A records
     const newARecords: DnsRecord[] = [
-      { type: 'A', name: '@', value: serverIp, ttl: 300 },
-      { type: 'A', name: 'www', value: serverIp, ttl: 300 },
+      { type: 'A', name: '@', value: ipAddress, ttl: 300 },
+      { type: 'A', name: 'www', value: ipAddress, ttl: 300 },
     ];
 
     // Step 4: Merge and write back
@@ -95,17 +96,17 @@ export function createDnsService(
   /**
    * Get DNS configuration info for a domain
    */
-  function getDnsInfo(domain: string, ip: string): DnsInfo {
+  function getDnsInfo(domain: string): DnsInfo {
     return {
       domain,
-      serverIp: ip,
+      serverIp: ipAddress,
       records: [
-        { type: 'A', host: '@', value: ip, ttl: 300 },
-        { type: 'A', host: 'www', value: ip, ttl: 300 },
+        { type: 'A', host: '@', value: ipAddress, ttl: 300 },
+        { type: 'A', host: 'www', value: ipAddress, ttl: 300 },
       ],
       instructions: [
-        `Configure DNS A record for '@' (root domain) pointing to ${ip}`,
-        `Configure DNS A record for 'www' subdomain pointing to ${ip}`,
+        `Configure DNS A record for '@' (root domain) pointing to ${ipAddress}`,
+        `Configure DNS A record for 'www' subdomain pointing to ${ipAddress}`,
         'DNS changes may take up to 48 hours to propagate globally',
         'Use the /dns/verify endpoint to check propagation status',
       ],
@@ -115,27 +116,24 @@ export function createDnsService(
   /**
    * Verify DNS is properly configured
    */
-  async function verifyDns(
-    domain: string,
-    expectedIp: string
-  ): Promise<DnsVerificationResult> {
+  async function verifyDns(domain: string): Promise<DnsVerificationResult> {
     try {
       // Use Bun's built-in DNS resolver
       const results = await Bun.dns.resolve(domain, 'A');
       const resolvedIps = results || [];
 
       // Check if any resolved IP matches expected IP
-      const verified = resolvedIps.includes(expectedIp);
+      const verified = resolvedIps.includes(ipAddress);
 
       return {
         domain,
         verified,
         resolvedIps,
-        expectedIp,
+        expectedIp: ipAddress,
         message: verified
-          ? `DNS is correctly configured. ${domain} resolves to ${expectedIp}`
+          ? `DNS is correctly configured. ${domain} resolves to ${ipAddress}`
           : resolvedIps.length > 0
-          ? `DNS is configured but points to ${resolvedIps.join(', ')} instead of ${expectedIp}`
+          ? `DNS is configured but points to ${resolvedIps.join(', ')} instead of ${ipAddress}`
           : `DNS is not yet configured. ${domain} does not resolve to any IP address`,
       };
     } catch (error) {
@@ -144,7 +142,7 @@ export function createDnsService(
         domain,
         verified: false,
         resolvedIps: [],
-        expectedIp,
+        expectedIp: ipAddress,
         message:
           error instanceof Error
             ? `DNS resolution failed: ${error.message}`
@@ -154,6 +152,7 @@ export function createDnsService(
   }
 
   return {
+    serverIp: ipAddress,
     configureDomain,
     getDnsInfo,
     verifyDns,
