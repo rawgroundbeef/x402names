@@ -15,18 +15,18 @@ export function createRedirectApp(db: BunSQLiteDatabase<any>, cache: DomainCache
     },
   });
 
-  // ACME challenge route for SSL provisioning (placeholder for future)
-  app.get('/.well-known/acme-challenge/:token', (c) => {
-    return c.json({ error: 'ACME challenge not yet implemented' }, 404);
-  });
-
-  // Handle domain requests (must have at least one dot to be a valid domain)
-  app.get('/:domain{.+\\..+}/*', async (c) => {
-    // Extract domain from path (first segment after /)
+  // Main redirect handler - handle all domain requests
+  app.all('/:domain{.+\\..+}/*', async (c) => {
+    // Extract domain and path from the modified path (host/path format from getPath)
     const fullPath = c.req.path;
     const pathParts = fullPath.substring(1).split('/');
     const domain = pathParts[0];
     const subpath = '/' + pathParts.slice(1).join('/');
+
+    // Handle ACME challenge requests (for SSL provisioning - placeholder for future)
+    if (subpath.startsWith('/.well-known/acme-challenge/')) {
+      return c.json({ error: 'ACME challenge not yet implemented' }, 404);
+    }
 
     // Check cache first
     let targetUrl = cache.get(domain);
@@ -205,8 +205,8 @@ export function createRedirectApp(db: BunSQLiteDatabase<any>, cache: DomainCache
     }
   });
 
-  // Root endpoint for requests without a valid domain pattern
-  app.get('/', (c) => {
+  // Catch-all for requests that don't match domain pattern (localhost, IPs, etc)
+  app.get('/*', (c) => {
     return c.json({
       service: 'x402names-redirect',
       message: 'Multi-domain redirect server',

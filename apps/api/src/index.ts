@@ -9,6 +9,8 @@ import { createDomainRoutes } from './routes/domains';
 import { createRegistrationRoutes } from './routes/registrations';
 import { createJobProcessor } from './lib/jobs/registration';
 import { clearAllJobs } from './lib/jobs/queue';
+import { createRedirectApp } from './redirect/server';
+import { DomainCache } from './redirect/cache';
 
 const app = new Hono();
 
@@ -20,6 +22,10 @@ const registrar = new MockRegistrar();
 
 // Create job processor
 const jobProcessor = createJobProcessor(registrar, db);
+
+// Create domain cache and redirect server
+export const domainCache = new DomainCache();
+const redirectApp = createRedirectApp(db, domainCache);
 
 // Mount health check route
 app.route('/health', health);
@@ -41,10 +47,24 @@ app.get('/', (c) => {
   });
 });
 
+// Start redirect server (only in non-test environments)
+let redirectServer: ReturnType<typeof Bun.serve> | undefined;
+if (env.NODE_ENV !== 'test') {
+  redirectServer = Bun.serve({
+    port: env.REDIRECT_PORT,
+    fetch: redirectApp.fetch,
+  });
+
+  console.log(`x402names redirect server running on port ${env.REDIRECT_PORT}`);
+}
+
 // Graceful shutdown handlers
 const shutdown = () => {
   console.log('Shutting down gracefully...');
   clearAllJobs();
+  if (redirectServer && typeof redirectServer.stop === 'function') {
+    redirectServer.stop();
+  }
   sqlite.close();
   process.exit(0);
 };
