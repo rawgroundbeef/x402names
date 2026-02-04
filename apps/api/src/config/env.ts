@@ -1,4 +1,4 @@
-import { cleanEnv, str, port } from 'envalid';
+import { cleanEnv, str, port, bool, num } from 'envalid';
 
 export const env = cleanEnv(process.env, {
   NODE_ENV: str({
@@ -11,4 +11,12 @@ export const env = cleanEnv(process.env, {
     choices: ['debug', 'info', 'warn', 'error'],
     default: 'info',
   }),
+  X402_RECEIVING_ADDRESS: str({ default: '' }),
+  X402_FACILITATOR_URL: str({ default: 'https://x402.org/facilitator' }),
+  X402_NETWORK: str({ default: 'eip155:84532' }),
+  NAMECHEAP_API_USER: str({ default: '' }),
+  NAMECHEAP_API_KEY: str({ default: '' }),
+  NAMECHEAP_CLIENT_IP: str({ default: '127.0.0.1' }),
+  NAMECHEAP_SANDBOX: bool({ default: true }),
+  DOMAIN_MARKUP_PERCENT: num({ default: 20 }),
 });

@@ -28,3 +28,15 @@ export const system = sqliteTable('system', {
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .$defaultFn(() => new Date()),
 });
+
+export const paymentRecords = sqliteTable('payment_records', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  paymentId: text('payment_id').notNull().unique(),
+  walletAddress: text('wallet_address').notNull(),
+  amount: text('amount').notNull(),
+  network: text('network').notNull(),
+  domain: text('domain'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
