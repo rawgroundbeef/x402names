@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Agent registers domain and points it at content with single API call and USDC payment.
-**Current focus:** Phase 5 complete, ready for Phase 6
+**Current focus:** Phase 6 Production Hardening in progress
 
 ## Current Position
 
 Phase: 6 of 6 (Production Hardening) — IN PROGRESS
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: In progress
-Last activity: 2026-02-04 — Completed 06-01-PLAN.md
+Last activity: 2026-02-04 — Completed 06-02-PLAN.md
 
-Progress: [█████████░] 87% overall (11/13 plans)
+Progress: [█████████░] 92% overall (12/13 plans)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 12
-- Average duration: 225 seconds (3.8 minutes)
-- Total execution time: 0.75 hours
+- Average duration: 238 seconds (4.0 minutes)
+- Total execution time: 0.79 hours
 
 **By Phase:**
 
@@ -32,7 +32,7 @@ Progress: [█████████░] 87% overall (11/13 plans)
 | 3 - Domain Check Management | 2 | 475s | 238s |
 | 4 - Registration Flow | 2 | 474s | 237s |
 | 5 - URL Forwarding | 3 | 917s | 306s |
-| 6 - Production Hardening | 1 | 142s | 142s |
+| 6 - Production Hardening | 2 | 494s | 247s |
 
 *Updated after each plan completion*
 
@@ -57,6 +57,9 @@ Recent decisions affecting current work:
 - 06-01: Paid endpoints excluded from rate limiting (payment is natural throttle)
 - 06-01: IP extraction via BEHIND_PROXY env var for proxy deployments
 - 06-01: RFC 9457 429 responses with Retry-After header
+- 06-02: Aggregate all validation errors before returning response
+- 06-02: Map error messages to machine-readable codes (URL_SCHEME_UNSUPPORTED, etc.)
+- 06-02: Block all private IP ranges including link-local/metadata (169.254.0.0/16)
 
 ### Pending Todos
 
@@ -73,13 +76,13 @@ Recent decisions affecting current work:
 
 **Phase 6 Production Hardening — IN PROGRESS**
 - Plan 01: Rate limiting middleware ✓ (144 tests passing)
-- Plan 02: Input validation (pending)
+- Plan 02: URL validation with SSRF prevention ✓ (182 tests passing)
 - Plan 03: Error documentation (pending)
 - No blockers
 
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 06-01-PLAN.md (Rate limiting middleware)
+Stopped at: Completed 06-02-PLAN.md (URL validation with SSRF prevention)
 Resume file: None
-Next action: Execute 06-02-PLAN.md (Input validation)
+Next action: Execute 06-03-PLAN.md (Error documentation)
