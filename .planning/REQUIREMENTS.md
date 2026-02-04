@@ -35,10 +35,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Hardening
 
-- [ ] **HARD-01**: Rate limiting per IP and per wallet address
-- [ ] **HARD-02**: Domain name validation (format, length, supported TLDs)
-- [ ] **HARD-03**: Target URL validation (valid URL, http/https only, no localhost)
-- [ ] **HARD-04**: Machine-readable error codes for all failure scenarios
+- [x] **HARD-01**: Rate limiting per IP and per wallet address
+- [x] **HARD-02**: Domain name validation (format, length, supported TLDs)
+- [x] **HARD-03**: Target URL validation (valid URL, http/https only, no localhost)
+- [x] **HARD-04**: Machine-readable error codes for all failure scenarios
 
 ## v2 Requirements
 
@@ -95,10 +95,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 2 | Complete |
 | INFRA-04 | Phase 1 | Complete |
-| HARD-01 | Phase 6 | Pending |
-| HARD-02 | Phase 6 | Pending |
-| HARD-03 | Phase 6 | Pending |
-| HARD-04 | Phase 6 | Pending |
+| HARD-01 | Phase 6 | Complete |
+| HARD-02 | Phase 6 | Complete |
+| HARD-03 | Phase 6 | Complete |
+| HARD-04 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 18 total
@@ -107,4 +107,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-04 after Phase 5 completion*
+*Last updated: 2026-02-04 after Phase 6 completion*

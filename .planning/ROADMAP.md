@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Domain Check & Management** - Availability checks and status lookup
 - [x] **Phase 4: Registration Flow** - Domain registration with payment verification
 - [x] **Phase 5: URL Forwarding** - Redirect server and DNS configuration
-- [ ] **Phase 6: Production Hardening** - Rate limiting, validation, error codes
+- [x] **Phase 6: Production Hardening** - Rate limiting, validation, error codes
 
 ## Phase Details
 
@@ -113,9 +113,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Rate limiting middleware with hono-rate-limiter, applied to free read endpoints
-- [ ] 06-02-PLAN.md — URL validation with SSRF prevention, aggregated validation errors, applied to register and url-update
-- [ ] 06-03-PLAN.md — Machine-readable error catalog JSON with GET /errors endpoint
+- [x] 06-01-PLAN.md — Rate limiting middleware with hono-rate-limiter, applied to free read endpoints (completed 2026-02-04)
+- [x] 06-02-PLAN.md — URL validation with SSRF prevention, aggregated validation errors, applied to register and url-update (completed 2026-02-04)
+- [x] 06-03-PLAN.md — Machine-readable error catalog JSON with GET /errors endpoint (completed 2026-02-04)
 
 ## Progress
 
@@ -129,7 +129,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Domain Check & Management | 2/2 | Complete | 2026-02-04 |
 | 4. Registration Flow | 2/2 | Complete | 2026-02-04 |
 | 5. URL Forwarding | 3/3 | Complete | 2026-02-04 |
-| 6. Production Hardening | 0/3 | Not started | - |
+| 6. Production Hardening | 3/3 | Complete | 2026-02-04 |
 
 ---
 *Last updated: 2026-02-04*
