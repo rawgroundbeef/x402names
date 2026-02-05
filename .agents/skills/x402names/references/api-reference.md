@@ -11,6 +11,9 @@
 - [Domain DNS](#domain-dns)
 - [Domain DNS Verify](#domain-dns-verify)
 - [Domain URL Update](#domain-url-update)
+- [Domain DNS Reconfigure](#domain-dns-reconfigure)
+- [Domain Renew](#domain-renew)
+- [Domain Transfer](#domain-transfer)
 - [Error Catalog](#error-catalog)
 - [Redirect Server](#redirect-server)
 - [Pricing Model](#pricing-model)
@@ -333,6 +336,116 @@ Update a domain's target URL. **Requires x402 payment of 2.00 USDC.**
 
 ---
 
+## Domain DNS Reconfigure
+
+### POST /domains/:domain/dns/configure
+
+Re-run DNS A record configuration for a domain. **Requires x402 payment of 1.00 USDC.**
+
+Useful when the server IP was wrong during initial registration or DNS needs to be re-applied.
+
+**Headers**:
+- `X-Payment`: x402 payment signature (required)
+
+**Response 200**:
+```json
+{
+  "success": true,
+  "domain": "example.com",
+  "dns": {
+    "configured": true,
+    "records": [
+      {"type": "A", "name": "@", "value": "1.2.3.4", "ttl": 300},
+      {"type": "A", "name": "www", "value": "1.2.3.4", "ttl": 300}
+    ]
+  },
+  "statusUpdated": "live",
+  "txHash": "0x..."
+}
+```
+
+`statusUpdated` shows the domain's status after the operation. If the domain was `registered`, it is promoted to `live`.
+
+**Response 402**: No payment or insufficient amount (< 1.00 USDC).
+**Response 403**: Payer wallet does not match domain owner.
+**Response 404**: Domain not found.
+**Response 409**: Payment already used.
+
+---
+
+## Domain Renew
+
+### POST /domains/:domain/renew
+
+Renew a domain for 1 year. **Requires x402 payment matching the TLD renewal price (with markup).**
+
+Domain must have status `registered` or `live`. Check `GET /tlds/:tld` for the `renewalPrice`.
+
+**Headers**:
+- `X-Payment`: x402 payment signature (required)
+
+**Response 200**:
+```json
+{
+  "success": true,
+  "domain": "example.com",
+  "renewal": {
+    "transactionId": "12345",
+    "orderId": "67890",
+    "expiresAt": "2028-02-04T00:00:00.000Z"
+  },
+  "price": 15.58,
+  "txHash": "0x..."
+}
+```
+
+**Response 400**: Domain status is not `registered` or `live`, or TLD is unsupported.
+**Response 402**: No payment or insufficient amount.
+**Response 403**: Payer wallet does not match domain owner.
+**Response 404**: Domain not found.
+**Response 409**: Payment already used.
+
+---
+
+## Domain Transfer
+
+### POST /domains/:domain/transfer
+
+Push/transfer a domain to another Namecheap account. **Requires x402 payment of 2.00 USDC.**
+
+After transfer, the domain status is set to `pending` (removed from active management by x402names).
+
+**Headers**:
+- `X-Payment`: x402 payment signature (required)
+
+**Request body**:
+```json
+{
+  "namecheapUsername": "target-account-username"
+}
+```
+
+**Response 200**:
+```json
+{
+  "success": true,
+  "domain": "example.com",
+  "transferredTo": "target-account-username",
+  "transfer": {
+    "transactionId": "12345"
+  },
+  "txHash": "0x..."
+}
+```
+
+**Response 400**: Missing or invalid `namecheapUsername`.
+**Response 402**: No payment or insufficient amount (< 2.00 USDC).
+**Response 403**: Payer wallet does not match domain owner.
+**Response 404**: Domain not found.
+**Response 409**: Payment already used.
+
+---
+
 ## Error Catalog
 
 ### GET /errors
@@ -370,6 +483,9 @@ Prices are base cost from the registrar (Namecheap) with a configurable markup (
 |-----------|-------|
 | Domain registration | Varies by TLD (see `GET /tlds`) |
 | URL update | Flat 2.00 USDC |
+| DNS reconfigure | Flat 1.00 USDC |
+| Domain renewal | Varies by TLD (see `GET /tlds` renewalPrice) |
+| Domain transfer | Flat 2.00 USDC |
 
 Example TLD prices (with 20% markup):
 - `.com`: ~$13.18 registration, ~$15.58 renewal
@@ -507,4 +623,4 @@ If registration fails after payment is accepted (e.g., registrar outage):
 - For failed jobs where payment was taken, contact the operator for resolution
 
 ### Wallet Ownership
-For URL updates, the payer wallet from the payment header must match the domain's `ownerWallet` (case-insensitive comparison). This prevents unauthorized modifications.
+For URL updates, DNS reconfiguration, renewal, and transfer, the payer wallet from the payment header must match the domain's `ownerWallet` (case-insensitive comparison). This prevents unauthorized modifications.

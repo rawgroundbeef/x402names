@@ -119,8 +119,11 @@ export function createDnsService(
   async function verifyDns(domain: string): Promise<DnsVerificationResult> {
     try {
       // Use Bun's built-in DNS resolver
+      // Bun.dns.resolve returns {address, ttl}[] objects, extract just the IPs
       const results = await Bun.dns.resolve(domain, 'A');
-      const resolvedIps = results || [];
+      const resolvedIps: string[] = (results || []).map((r: any) =>
+        typeof r === 'string' ? r : r.address
+      );
 
       // Check if any resolved IP matches expected IP
       const verified = resolvedIps.includes(ipAddress);
