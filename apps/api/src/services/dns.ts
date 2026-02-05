@@ -71,11 +71,18 @@ export function createDnsService(
     // Step 1: Read existing DNS records
     const existingRecords = await registrar.getDnsRecords(domain);
 
-    // Step 2: Filter out existing A records for '@' and 'www' hosts
-    const preservedRecords = existingRecords.filter(
-      (record) =>
-        !(record.type === 'A' && (record.name === '@' || record.name === 'www'))
-    );
+    // Step 2: Filter out existing records for '@' and 'www' that conflict with A records
+    // This removes A, CNAME, URL, URL301, and FRAME records (e.g., Namecheap parking page)
+    const preservedRecords = existingRecords.filter((record) => {
+      const isRootOrWww = record.name === '@' || record.name === 'www';
+      const isConflicting =
+        record.type === 'A' ||
+        record.type === 'CNAME' ||
+        record.type === 'URL' ||
+        record.type === 'URL301' ||
+        record.type === 'FRAME';
+      return !(isConflicting && isRootOrWww);
+    });
 
     // Step 3: Create new A records
     const newARecords: DnsRecord[] = [
