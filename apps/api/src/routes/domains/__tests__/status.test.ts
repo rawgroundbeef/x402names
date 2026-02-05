@@ -68,7 +68,7 @@ describe('GET /domains/:domain/status', () => {
     const updatedAt = new Date('2026-01-15T00:00:00Z').getTime();
 
     await db.insert(domains).values({
-      name: 'mytest',
+      name: 'mytest.com',
       tld: 'com',
       status: 'live',
       ownerWallet: '0x1234567890abcdef',
@@ -179,7 +179,7 @@ describe('GET /domains/:domain/status', () => {
   test('pending status domain in DB returns correctly', async () => {
     // Insert pending domain
     await db.insert(domains).values({
-      name: 'pending',
+      name: 'pending.com',
       tld: 'com',
       status: 'pending',
       ownerWallet: '0xpending',
@@ -201,7 +201,7 @@ describe('GET /domains/:domain/status', () => {
   test('failed status domain in DB returns correctly', async () => {
     // Insert failed domain
     await db.insert(domains).values({
-      name: 'failed',
+      name: 'failed.com',
       tld: 'com',
       status: 'failed',
       ownerWallet: '0xfailed',

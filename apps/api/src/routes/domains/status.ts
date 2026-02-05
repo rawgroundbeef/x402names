@@ -3,7 +3,7 @@ import type { DomainRegistrar, RegistrarUnavailable } from '../../integrations/r
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { validateDomain } from '../../lib/validation/domain';
 import { createProblemResponse } from '../../lib/errors';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { domains } from '../../db/schema';
 import { parse } from 'tldts';
 
@@ -61,11 +61,12 @@ export function createStatusRoutes(
     }
 
     try {
-      // First check local database
+      // First check local database (name stores full domain, e.g. "sentientbeef.xyz")
+      const fullDomain = `${sld}.${tld}`;
       const domainRecord = await db
         .select()
         .from(domains)
-        .where(and(eq(domains.name, sld), eq(domains.tld, tld)))
+        .where(eq(domains.name, fullDomain))
         .get();
 
       if (domainRecord) {
