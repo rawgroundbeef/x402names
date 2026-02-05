@@ -130,6 +130,7 @@ export function createUrlUpdateRoutes(
           asset: USDC_BASE,
           payTo: env.X402_RECEIVING_ADDRESS,
           maxTimeoutSeconds: 300,
+          extra: { name: 'USD Coin', version: '2' },
         }],
         resource: {
           url: `${c.req.url}`,
@@ -168,6 +169,7 @@ export function createUrlUpdateRoutes(
           asset: USDC_BASE,
           payTo: env.X402_RECEIVING_ADDRESS,
           maxTimeoutSeconds: 300,
+          extra: { name: 'USD Coin', version: '2' },
         }],
       };
       c.header('payment-required', btoa(JSON.stringify(paymentBody)));
