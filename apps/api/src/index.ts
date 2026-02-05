@@ -80,7 +80,7 @@ app.get('/', (c) => {
   });
 });
 
-// Start redirect server (only in non-test environments)
+// Start redirect server on separate port for local development
 let redirectServer: ReturnType<typeof Bun.serve> | undefined;
 if (env.NODE_ENV !== 'test') {
   redirectServer = Bun.serve({
@@ -108,8 +108,32 @@ process.on('SIGTERM', shutdown);
 // Log startup
 console.log(`x402names API running on port ${env.PORT}`);
 
+/**
+ * Combined fetch handler for both API and redirect traffic.
+ *
+ * On Fly, all traffic arrives on port 3000. We check the Host header:
+ * - If it's the Fly app hostname, localhost, or an IP → serve API
+ * - If it's a custom domain (e.g., sentientbeef.xyz) → serve redirect
+ */
+function combinedFetch(req: Request): Response | Promise<Response> {
+  const host = (req.headers.get('host') || '').split(':')[0];
+
+  const isApiHost =
+    host === '' ||
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.endsWith('.fly.dev') ||
+    host.endsWith('.fly.io');
+
+  if (!isApiHost && host.includes('.')) {
+    return redirectApp.fetch(req);
+  }
+
+  return app.fetch(req);
+}
+
 // Export for Bun.serve
 export default {
   port: env.PORT,
-  fetch: app.fetch,
+  fetch: combinedFetch,
 };
