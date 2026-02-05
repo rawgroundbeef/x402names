@@ -49,6 +49,20 @@ export interface DomainStatus {
   nameservers?: string[];
 }
 
+export interface RenewalResult {
+  success: boolean;
+  domain: string;
+  transactionId: string;
+  orderId?: string;
+  expiresAt?: Date;
+}
+
+export interface TransferResult {
+  success: boolean;
+  domain: string;
+  transactionId?: string;
+}
+
 export interface DnsRecord {
   type: 'A' | 'AAAA' | 'CNAME' | 'URL' | 'URL301' | 'FRAME';
   name: string;
@@ -94,6 +108,16 @@ export abstract class DomainRegistrar {
    * Get current DNS records for a domain
    */
   abstract getDnsRecords(domain: string): Promise<DnsRecord[]>;
+
+  /**
+   * Renew a domain for the specified number of years
+   */
+  abstract renew(domain: string, years: number): Promise<RenewalResult>;
+
+  /**
+   * Push/transfer a domain to another registrar account
+   */
+  abstract pushToAccount(domain: string, targetAccount: string): Promise<TransferResult>;
 }
 
 // ============================================================================

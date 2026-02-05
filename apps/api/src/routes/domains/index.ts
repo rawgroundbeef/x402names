@@ -9,7 +9,10 @@ import { createCheckRoutes } from './check';
 import { createStatusRoutes } from './status';
 import { createRegisterRoutes } from './register';
 import { createDnsRoutes } from './dns';
+import { createDnsConfigureRoutes } from './dns-configure';
 import { createUrlUpdateRoutes } from './url-update';
+import { createRenewRoutes } from './renew';
+import { createTransferRoutes } from './transfer';
 
 /**
  * Factory function to create domain routes with dependency injection
@@ -38,6 +41,15 @@ export function createDomainRoutes(
 
   // Mount URL update routes for PATCH /domains/:name/url
   router.route('/', createUrlUpdateRoutes(db, domainCache, contentCache));
+
+  // Mount DNS reconfigure routes for POST /domains/:name/dns/configure
+  router.route('/', createDnsConfigureRoutes(db, dnsService, domainCache, contentCache));
+
+  // Mount renewal routes for POST /domains/:name/renew
+  router.route('/', createRenewRoutes(registrar, db));
+
+  // Mount transfer routes for POST /domains/:name/transfer
+  router.route('/', createTransferRoutes(registrar, db));
 
   return router;
 }

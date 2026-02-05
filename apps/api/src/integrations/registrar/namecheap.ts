@@ -13,6 +13,8 @@ import {
   RegistrationResult,
   DomainStatus,
   DnsRecord,
+  RenewalResult,
+  TransferResult,
   RegistrarError,
   RegistrarUnavailable,
   DomainTaken,
@@ -292,6 +294,41 @@ export class NamecheapRegistrar extends DomainRegistrar {
     }
 
     return records;
+  }
+
+  async renew(domain: string, years: number): Promise<RenewalResult> {
+    const xml = await this.callApi('namecheap.domains.renew', {
+      DomainName: domain,
+      Years: years.toString(),
+    });
+
+    const transactionMatch = xml.match(/TransactionID="(\d+)"/);
+    const orderMatch = xml.match(/OrderID="(\d+)"/);
+    const renewedMatch = xml.match(/DomainName="([^"]+)"/);
+
+    return {
+      success: true,
+      domain: renewedMatch?.[1] || domain,
+      transactionId: transactionMatch?.[1] || '',
+      orderId: orderMatch?.[1],
+    };
+  }
+
+  async pushToAccount(domain: string, targetAccount: string): Promise<TransferResult> {
+    const xml = await this.callApi('namecheap.domains.transfer.create', {
+      DomainName: domain,
+      Years: '1',
+      ActionType: 'PUSH',
+      PushTo: targetAccount,
+    });
+
+    const transactionMatch = xml.match(/TransactionID="(\d+)"/);
+
+    return {
+      success: true,
+      domain,
+      transactionId: transactionMatch?.[1],
+    };
   }
 
   /**

@@ -13,6 +13,8 @@ import {
   RegistrationResult,
   DomainStatus,
   DnsRecord,
+  RenewalResult,
+  TransferResult,
 } from './types';
 
 export class MockRegistrar extends DomainRegistrar {
@@ -85,5 +87,23 @@ export class MockRegistrar extends DomainRegistrar {
 
   async getDnsRecords(domain: string): Promise<DnsRecord[]> {
     return this.dnsRecords.get(domain) || [];
+  }
+
+  async renew(domain: string, years: number): Promise<RenewalResult> {
+    return {
+      success: true,
+      domain,
+      transactionId: `MOCK-RENEW-${Date.now()}`,
+      orderId: `MOCK-RENEW-ORDER-${Date.now()}`,
+      expiresAt: new Date(Date.now() + years * 365 * 24 * 60 * 60 * 1000),
+    };
+  }
+
+  async pushToAccount(domain: string, targetAccount: string): Promise<TransferResult> {
+    return {
+      success: true,
+      domain,
+      transactionId: `MOCK-TRANSFER-${Date.now()}`,
+    };
   }
 }
