@@ -27,3 +27,32 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Agent/AI tool configs and skills
+.agent/
+.agents/
+.claude/
+.cline/
+.codex/
+.commandcode/
+.continue/
+.crush/
+.cursor/
+.factory/
+.gemini/
+.github/
+.goose/
+.kilocode/
+.kiro/
+.mcpjam/
+.neovate/
+.opencode/
+.openhands/
+.pi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.windsurf/
+.zencoder/
+skills/

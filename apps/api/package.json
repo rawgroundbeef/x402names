@@ -10,9 +10,7 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",
-    "@x402/core": "^2.2.0",
-    "@x402/evm": "^2.2.0",
-    "@x402/hono": "^2.2.0",
+    "@openfacilitator/sdk": "^1.0.0",
     "drizzle-orm": "^0.36.4",
     "envalid": "^8.0.0",
     "hono": "^4.6.14",

@@ -3,8 +3,11 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { eq } from 'drizzle-orm';
 import { domains } from '../db/schema';
 import type { DomainCache } from './cache';
+import type { ContentCache } from './content-cache';
 
-export function createRedirectApp(db: BunSQLiteDatabase<any>, cache: DomainCache) {
+const FETCH_TIMEOUT_MS = 10_000;
+
+export function createRedirectApp(db: BunSQLiteDatabase<any>, cache: DomainCache, contentCache: ContentCache) {
   const app = new Hono({
     // Use host header to route requests by domain
     getPath: (req) => {
@@ -41,7 +44,7 @@ export function createRedirectApp(db: BunSQLiteDatabase<any>, cache: DomainCache
 
       if (domainRecord) {
         if ((domainRecord.status === 'live' || domainRecord.status === 'registered') && domainRecord.targetUrl) {
-          // Cache the targetUrl and proceed to redirect
+          // Cache the targetUrl and proceed to proxy
           targetUrl = domainRecord.targetUrl;
           cache.set(domain, targetUrl);
         } else {
@@ -158,27 +161,66 @@ export function createRedirectApp(db: BunSQLiteDatabase<any>, cache: DomainCache
       }
     }
 
-    // Perform 301 redirect, preserving path and query string
+    // Proxy the upstream content instead of redirecting
     try {
-      const redirectUrl = new URL(targetUrl);
+      const upstreamUrl = new URL(targetUrl);
       // Preserve the subpath (everything after the domain)
       if (subpath !== '/') {
-        redirectUrl.pathname = subpath;
+        upstreamUrl.pathname = subpath;
       }
       // Preserve query string
       const originalUrl = new URL(c.req.url);
-      redirectUrl.search = originalUrl.search;
+      upstreamUrl.search = originalUrl.search;
 
-      return c.redirect(redirectUrl.toString(), 301);
+      const cacheKey = domain + subpath + originalUrl.search;
+
+      // Check content cache first
+      const cached = contentCache.get(cacheKey);
+      if (cached) {
+        return new Response(cached.body, {
+          status: cached.statusCode,
+          headers: {
+            'Content-Type': cached.contentType,
+            'Cache-Control': 'public, max-age=300',
+          },
+        });
+      }
+
+      // Fetch upstream content
+      const upstreamResponse = await fetch(upstreamUrl.toString(), {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        headers: {
+          'Accept': c.req.header('Accept') || '*/*',
+          'Accept-Encoding': 'identity',
+        },
+      });
+
+      const body = Buffer.from(await upstreamResponse.arrayBuffer());
+      const contentType = upstreamResponse.headers.get('Content-Type') || 'application/octet-stream';
+
+      // Cache the response
+      contentCache.set(cacheKey, {
+        body,
+        contentType,
+        statusCode: upstreamResponse.status,
+      });
+
+      return new Response(body, {
+        status: upstreamResponse.status,
+        headers: {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=300',
+        },
+      });
     } catch (error) {
-      // Invalid targetUrl stored in database
+      // Upstream fetch failed - serve 503 error page
       return c.html(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configuration Error</title>
+  <title>Service Unavailable</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -196,12 +238,12 @@ export function createRedirectApp(db: BunSQLiteDatabase<any>, cache: DomainCache
 </head>
 <body>
   <div>
-    <h1>Configuration Error</h1>
-    <p>The target URL for this domain is invalid.</p>
+    <h1>Service Unavailable</h1>
+    <p>The upstream content could not be fetched. Please try again later.</p>
   </div>
 </body>
 </html>
-      `, 500);
+      `, 503);
     }
   });
 

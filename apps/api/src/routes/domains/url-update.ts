@@ -3,17 +3,24 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { decodePaymentSignatureHeader } from '@x402/core/http';
+import { OpenFacilitator, toV1NetworkId } from '@openfacilitator/sdk';
+import type { PaymentRequirementsV1, PaymentPayload } from '@openfacilitator/sdk';
 import { domains } from '../../db/schema';
 import { createProblemResponse, createValidationProblem, validationErrorHook } from '../../lib/errors';
 import { validateTargetUrl } from '../../lib/validation/url';
 import { DomainCache } from '../../redirect/cache';
+import type { ContentCache } from '../../redirect/content-cache';
 import { hasPaymentBeenUsed, recordPayment } from '../../integrations/payment/replay-protection';
+import { env } from '../../config/env';
 
-/**
- * Flat fee for URL updates
- */
+/** Flat fee for URL updates in USDC */
 const URL_UPDATE_FEE_USDC = 2.00;
+
+/** URL update fee in atomic units (6 decimals) */
+const URL_UPDATE_FEE_ATOMIC = String(Math.round(URL_UPDATE_FEE_USDC * 1_000_000));
+
+/** USDC contract address on Base */
+const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
 /**
  * Request schema for URL update
@@ -36,9 +43,11 @@ async function generatePaymentId(paymentHeader: string): Promise<string> {
  */
 export function createUrlUpdateRoutes(
   db: BunSQLiteDatabase<any>,
-  domainCache: DomainCache
+  domainCache: DomainCache,
+  contentCache: ContentCache
 ) {
   const router = new Hono();
+  const facilitator = new OpenFacilitator({ url: env.X402_FACILITATOR_URL });
 
   /**
    * PATCH /:name/url
@@ -96,24 +105,44 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 3. Extract payment header
-    const paymentHeader = c.req.header('payment-signature') || c.req.header('x-payment');
+    // 3. Build payment requirements
+    const v1Network = toV1NetworkId(env.X402_NETWORK);
 
-    if (!paymentHeader) {
-      return createProblemResponse(
-        c,
-        402,
-        'error:payment_required',
-        'Payment Required',
-        'URL update costs 2.00 USDC'
-      );
+    const requirements: PaymentRequirementsV1 = {
+      scheme: 'exact',
+      network: v1Network,
+      maxAmountRequired: URL_UPDATE_FEE_ATOMIC,
+      asset: USDC_BASE,
+      payTo: env.X402_RECEIVING_ADDRESS,
+    };
+
+    // 4. Check for x-payment header — return proper 402 if missing
+    const xPayment = c.req.header('x-payment');
+
+    if (!xPayment) {
+      return c.json({
+        x402Version: 2,
+        error: 'Payment Required',
+        accepts: [{
+          scheme: 'exact',
+          network: env.X402_NETWORK,
+          amount: URL_UPDATE_FEE_ATOMIC,
+          asset: USDC_BASE,
+          payTo: env.X402_RECEIVING_ADDRESS,
+          maxTimeoutSeconds: 300,
+        }],
+        resource: {
+          url: `${c.req.url}`,
+          method: 'PATCH',
+        },
+      }, 402);
     }
 
-    // 4. Decode payment
-    let paymentPayload: any;
+    // 5. Decode the payment payload
+    let paymentPayload: PaymentPayload;
     try {
-      paymentPayload = decodePaymentSignatureHeader(paymentHeader);
-    } catch (error) {
+      paymentPayload = JSON.parse(atob(xPayment));
+    } catch {
       return createProblemResponse(
         c,
         400,
@@ -123,46 +152,26 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 5. Extract payer wallet
-    const payerWallet = (paymentPayload.payload as any)?.authorization?.from;
-
-    if (!payerWallet) {
-      return createProblemResponse(
-        c,
-        400,
-        'error:invalid_payment',
-        'Invalid Payment',
-        'Could not extract payer wallet from payment'
-      );
+    // 6. Verify the payment (does NOT settle)
+    const verifyResult = await facilitator.verify(paymentPayload, requirements);
+    if (!verifyResult.isValid) {
+      return c.json({
+        x402Version: 2,
+        error: 'Payment verification failed',
+        reason: verifyResult.invalidReason,
+        accepts: [{
+          scheme: 'exact',
+          network: env.X402_NETWORK,
+          amount: URL_UPDATE_FEE_ATOMIC,
+          asset: USDC_BASE,
+          payTo: env.X402_RECEIVING_ADDRESS,
+          maxTimeoutSeconds: 300,
+        }],
+      }, 402);
     }
 
-    // 6. Validate payment amount
-    const paymentAmountRaw = paymentPayload.accepted?.amount
-      || (paymentPayload.payload as any)?.authorization?.value;
-
-    if (!paymentAmountRaw) {
-      return createProblemResponse(
-        c,
-        400,
-        'error:invalid_payment',
-        'Invalid Payment',
-        'Could not extract payment amount'
-      );
-    }
-
-    const paymentAmountUsdc = Number(paymentAmountRaw) / 1_000_000;
-
-    if (paymentAmountUsdc < URL_UPDATE_FEE_USDC) {
-      return createProblemResponse(
-        c,
-        402,
-        'error:insufficient_payment',
-        'Insufficient Payment',
-        `URL update requires ${URL_UPDATE_FEE_USDC.toFixed(2)} USDC but payment was ${paymentAmountUsdc.toFixed(2)} USDC`
-      );
-    }
-
-    // 7. Verify ownership
+    // 7. Verify ownership — payer wallet must match domain owner
+    const payerWallet = verifyResult.payer || '';
     if (domain.ownerWallet.toLowerCase() !== payerWallet.toLowerCase()) {
       return createProblemResponse(
         c,
@@ -184,8 +193,7 @@ export function createUrlUpdateRoutes(
       }, 200);
     }
 
-    // 9. Check payment replay protection
-    const paymentId = await generatePaymentId(paymentHeader);
+    const paymentId = await generatePaymentId(xPayment);
     if (hasPaymentBeenUsed(db, paymentId)) {
       return createProblemResponse(
         c,
@@ -196,21 +204,31 @@ export function createUrlUpdateRoutes(
       );
     }
 
+    // 9. Settle the payment on-chain
+    const settleResult = await facilitator.settle(paymentPayload, requirements);
+    if (!settleResult.success) {
+      return createProblemResponse(
+        c,
+        500,
+        'error:settlement_failed',
+        'Settlement Failed',
+        `Payment settlement failed: ${settleResult.errorReason || 'unknown error'}`
+      );
+    }
+
     // 10. Update database and record payment in transaction
     const previousUrl = domain.targetUrl;
 
     try {
       db.transaction(() => {
-        // Record payment for replay protection
         recordPayment(db, {
           paymentId,
           walletAddress: payerWallet,
           amount: URL_UPDATE_FEE_USDC.toFixed(2),
-          network: c.req.header('x-payment-network') || 'unknown',
+          network: settleResult.network || env.X402_NETWORK,
           domain: domainName,
         });
 
-        // Update domain
         db.update(domains)
           .set({
             targetUrl,
@@ -230,8 +248,9 @@ export function createUrlUpdateRoutes(
       );
     }
 
-    // 11. Invalidate cache
+    // 11. Invalidate caches
     domainCache.del(domainName);
+    contentCache.delDomain(domainName);
 
     // 12. Return success response
     return c.json({
@@ -240,6 +259,7 @@ export function createUrlUpdateRoutes(
       domain: domainName,
       targetUrl,
       previousUrl,
+      txHash: settleResult.transaction,
     }, 200);
   });
 

@@ -8,7 +8,7 @@ WORKDIR /app
 FROM base AS install
 
 # Copy workspace configuration
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 COPY apps/api/package.json ./apps/api/
 
 # Install dependencies
@@ -16,7 +16,7 @@ RUN bun install --frozen-lockfile
 
 # Install production dependencies separately for smaller final image
 RUN mkdir -p /temp/prod
-COPY package.json bun.lockb /temp/prod/
+COPY package.json bun.lock /temp/prod/
 COPY apps/api/package.json /temp/prod/apps/api/
 RUN cd /temp/prod && bun install --frozen-lockfile --production
 
@@ -50,4 +50,4 @@ USER bun
 EXPOSE 3000
 
 # Run migrations and start server
-CMD ["sh", "-c", "bun run apps/api/src/db/migrate.ts && bun run apps/api/src/index.ts"]
+CMD ["sh", "-c", "DATABASE_URL=/app/data/app.db cd apps/api && bun run src/db/migrate.ts && cd /app && bun run apps/api/src/index.ts"]

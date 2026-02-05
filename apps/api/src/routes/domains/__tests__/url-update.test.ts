@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
+import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test';
 import { Hono } from 'hono';
 import { Database } from 'bun:sqlite';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
@@ -8,7 +8,32 @@ import { createJobProcessor } from '../../../lib/jobs/registration';
 import { clearAllJobs } from '../../../lib/jobs/queue';
 import { problemDetailsErrorHandler } from '../../../lib/errors';
 import { DomainCache } from '../../../redirect/cache';
+import { ContentCache } from '../../../redirect/content-cache';
 import { createDnsService } from '../../../services/dns';
+
+// Mock the OpenFacilitator SDK so tests don't make real HTTP calls
+mock.module('@openfacilitator/sdk', () => ({
+  OpenFacilitator: class {
+    constructor() {}
+    async verify(payload: any, requirements: any) {
+      const paymentAmount = payload.accepted?.amount || payload.payload?.authorization?.value;
+      const requiredAmount = requirements.maxAmountRequired;
+      if (paymentAmount && requiredAmount && Number(paymentAmount) < Number(requiredAmount)) {
+        return { isValid: false, invalidReason: 'Insufficient payment amount' };
+      }
+      const payer = payload.payload?.authorization?.from;
+      return { isValid: true, payer };
+    }
+    async settle(payload: any, requirements: any) {
+      const payer = payload.payload?.authorization?.from;
+      return { success: true, transaction: 'mock-tx-hash', payer, network: 'eip155:8453' };
+    }
+  },
+  toV1NetworkId: (id: string) => {
+    const map: Record<string, string> = { 'eip155:8453': 'base', 'eip155:84532': 'base-sepolia' };
+    return map[id] || id;
+  },
+}));
 
 /**
  * Helper to create a mock payment header
@@ -41,6 +66,7 @@ describe('PATCH /domains/:name/url', () => {
   let registrar: MockRegistrar;
   let jobProcessor: ReturnType<typeof createJobProcessor>;
   let domainCache: DomainCache;
+  let contentCache: ContentCache;
   let dnsService: ReturnType<typeof createDnsService>;
   let app: Hono;
 
@@ -113,13 +139,14 @@ describe('PATCH /domains/:name/url', () => {
     // Create dependencies
     registrar = new MockRegistrar();
     domainCache = new DomainCache();
+    contentCache = new ContentCache();
     dnsService = createDnsService(registrar, '127.0.0.1');
     jobProcessor = createJobProcessor(registrar, db, dnsService);
 
     // Create test app
     app = new Hono();
     app.onError(problemDetailsErrorHandler);
-    app.route('/domains', createDomainRoutes(registrar, db, jobProcessor, dnsService, domainCache));
+    app.route('/domains', createDomainRoutes(registrar, db, jobProcessor, dnsService, domainCache, contentCache));
   });
 
   afterEach(() => {
@@ -135,7 +162,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: newUrl }),
     });
@@ -148,6 +175,7 @@ describe('PATCH /domains/:name/url', () => {
     expect(data.domain).toBe(testDomainName);
     expect(data.targetUrl).toBe(newUrl);
     expect(data.previousUrl).toBe(testTargetUrl);
+    expect(data.txHash).toBe('mock-tx-hash');
 
     // Verify database was updated
     const domain = sqlite.query('SELECT * FROM domains WHERE name = ?').get(testDomainName) as any;
@@ -161,7 +189,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: testTargetUrl }),
     });
@@ -183,7 +211,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: 'https://new.com' }),
     });
@@ -195,7 +223,7 @@ describe('PATCH /domains/:name/url', () => {
     expect(data.title).toBe('Domain Not Found');
   });
 
-  test('returns 402 when no payment header provided', async () => {
+  test('returns 402 with x402 payment requirements when no payment header', async () => {
     const response = await app.request(`/domains/${testDomainName}/url`, {
       method: 'PATCH',
       headers: {
@@ -207,9 +235,13 @@ describe('PATCH /domains/:name/url', () => {
     expect(response.status).toBe(402);
 
     const data: any = await response.json();
-    expect(data.type).toBe('error:payment_required');
-    expect(data.title).toBe('Payment Required');
-    expect(data.detail).toContain('2.00 USDC');
+    expect(data.x402Version).toBe(2);
+    expect(data.error).toBe('Payment Required');
+    expect(data.accepts).toBeDefined();
+    expect(data.accepts).toHaveLength(1);
+    expect(data.accepts[0].scheme).toBe('exact');
+    expect(data.accepts[0].amount).toBe('2000000');
+    expect(data.accepts[0].maxTimeoutSeconds).toBe(300);
   });
 
   test('returns 402 for insufficient payment', async () => {
@@ -219,7 +251,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: 'https://new.com' }),
     });
@@ -227,10 +259,9 @@ describe('PATCH /domains/:name/url', () => {
     expect(response.status).toBe(402);
 
     const data: any = await response.json();
-    expect(data.type).toBe('error:insufficient_payment');
-    expect(data.title).toBe('Insufficient Payment');
-    expect(data.detail).toContain('2.00 USDC');
-    expect(data.detail).toContain('1.00 USDC');
+    expect(data.x402Version).toBe(2);
+    expect(data.error).toBe('Payment verification failed');
+    expect(data.reason).toContain('Insufficient');
   });
 
   test('returns 403 when non-owner attempts to update', async () => {
@@ -241,7 +272,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: 'https://new.com' }),
     });
@@ -261,7 +292,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: 'not-a-valid-url' }),
     });
@@ -280,7 +311,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({}),
     });
@@ -304,7 +335,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: newUrl }),
     });
@@ -323,7 +354,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: newUrl }),
     });
@@ -344,7 +375,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: newUrl }),
     });
@@ -356,7 +387,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: 'https://another.com' }),
     });
@@ -377,7 +408,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: newUrl }),
     });
@@ -396,7 +427,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: 'http://localhost' }),
     });
@@ -418,7 +449,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: 'javascript:alert(1)' }),
     });
@@ -441,7 +472,7 @@ describe('PATCH /domains/:name/url', () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ targetUrl: newUrl }),
     });

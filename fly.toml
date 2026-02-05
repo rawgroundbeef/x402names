@@ -1,16 +1,23 @@
-# Fly.io deployment configuration for x402names API
-# Create volume first: fly volumes create x402names_data --size 1 --region iad
+# fly.toml app configuration file generated for x402names-api on 2026-02-04T19:22:59-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "x402names-api"
-primary_region = "iad"
+app = 'x402names-api'
+primary_region = 'iad'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
+
+[[mounts]]
+  source = 'x402names_data'
+  destination = '/app/data'
+  initial_size = '1gb'
 
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
@@ -18,8 +25,4 @@ primary_region = "iad"
   memory = '256mb'
   cpu_kind = 'shared'
   cpus = 1
-
-[mounts]
-  source = "x402names_data"
-  destination = "/app/data"
-  initial_size = "1gb"
+  memory_mb = 256

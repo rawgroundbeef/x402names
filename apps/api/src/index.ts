@@ -13,6 +13,7 @@ import { createJobProcessor } from './lib/jobs/registration';
 import { clearAllJobs } from './lib/jobs/queue';
 import { createRedirectApp } from './redirect/server';
 import { DomainCache } from './redirect/cache';
+import { ContentCache } from './redirect/content-cache';
 import { createDnsService } from './services/dns';
 import { createReadLimiter } from './lib/middleware/rate-limit';
 
@@ -37,9 +38,10 @@ const dnsService = createDnsService(registrar, env.REDIRECT_SERVER_IP);
 // Create job processor with DNS service
 const jobProcessor = createJobProcessor(registrar, db, dnsService);
 
-// Create domain cache and redirect server
+// Create domain cache, content cache, and redirect server
 export const domainCache = new DomainCache();
-const redirectApp = createRedirectApp(db, domainCache);
+export const contentCache = new ContentCache();
+const redirectApp = createRedirectApp(db, domainCache, contentCache);
 
 // Create rate limiter for free read endpoints
 const readLimiter = createReadLimiter();
@@ -65,7 +67,7 @@ app.route('/tlds', tlds);
 app.route('/errors', errors);
 
 // Mount domain routes
-app.route('/domains', createDomainRoutes(registrar, db, jobProcessor, dnsService, domainCache));
+app.route('/domains', createDomainRoutes(registrar, db, jobProcessor, dnsService, domainCache, contentCache));
 
 // Mount registration routes
 app.route('/registrations', createRegistrationRoutes(db));

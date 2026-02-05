@@ -15,7 +15,7 @@ export const env = cleanEnv(process.env, {
     default: 'info',
   }),
   X402_RECEIVING_ADDRESS: str({ default: '' }),
-  X402_FACILITATOR_URL: str({ default: 'https://x402.org/facilitator' }),
+  X402_FACILITATOR_URL: str({ default: 'https://pay.openfacilitator.io' }),
   X402_NETWORK: str({ default: 'eip155:84532' }),
   NAMECHEAP_API_USER: str({ default: '' }),
   NAMECHEAP_API_KEY: str({ default: '' }),

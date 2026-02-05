@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
+import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test';
 import { Hono } from 'hono';
 import { Database } from 'bun:sqlite';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
@@ -8,8 +8,32 @@ import { createJobProcessor } from '../../../lib/jobs/registration';
 import { clearAllJobs } from '../../../lib/jobs/queue';
 import { problemDetailsErrorHandler } from '../../../lib/errors';
 
+// Mock the OpenFacilitator SDK so tests don't make real HTTP calls
+mock.module('@openfacilitator/sdk', () => ({
+  OpenFacilitator: class {
+    constructor() {}
+    async verify(payload: any, requirements: any) {
+      const paymentAmount = payload.accepted?.amount || payload.payload?.authorization?.value;
+      const requiredAmount = requirements.maxAmountRequired;
+      if (paymentAmount && requiredAmount && Number(paymentAmount) < Number(requiredAmount)) {
+        return { isValid: false, invalidReason: 'Insufficient payment amount' };
+      }
+      const payer = payload.payload?.authorization?.from;
+      return { isValid: true, payer };
+    }
+    async settle(payload: any, requirements: any) {
+      const payer = payload.payload?.authorization?.from;
+      return { success: true, transaction: 'mock-tx-hash', payer, network: 'eip155:8453' };
+    }
+  },
+  toV1NetworkId: (id: string) => {
+    const map: Record<string, string> = { 'eip155:8453': 'base', 'eip155:84532': 'base-sepolia' };
+    return map[id] || id;
+  },
+}));
+
 /**
- * Helper to create a mock payment header
+ * Helper to create a mock payment header (base64-encoded JSON)
  */
 function createMockPaymentHeader(payerWallet: string, amountUsdc: number = 10.00): string {
   const atomicAmount = String(Math.round(amountUsdc * 1_000_000));
@@ -117,7 +141,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com' }),
     });
@@ -129,6 +153,7 @@ describe('POST /domains/register', () => {
     expect(data.statusUrl).toBe(`/registrations/${data.jobId}/status`);
     expect(data.retryAfterSeconds).toBe(2);
     expect(data.message).toContain('Registration initiated');
+    expect(data.txHash).toBe('mock-tx-hash');
   });
 
   test('returns 400 for invalid domain format', async () => {
@@ -138,7 +163,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: '---invalid' }),
     });
@@ -157,7 +182,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'test.randomtld' }),
     });
@@ -176,7 +201,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'taken-example.com' }),
     });
@@ -196,7 +221,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com' }),
     });
@@ -210,7 +235,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com' }),
     });
@@ -223,7 +248,7 @@ describe('POST /domains/register', () => {
     expect(jobId1).toBe(jobId2);
   });
 
-  test('returns 402 when no payment header', async () => {
+  test('returns 402 with x402 payment requirements when no payment header', async () => {
     const response = await app.request('/register', {
       method: 'POST',
       headers: {
@@ -235,8 +260,14 @@ describe('POST /domains/register', () => {
     expect(response.status).toBe(402);
 
     const data: any = await response.json();
-    expect(data.type).toBe('error:payment_required');
-    expect(data.title).toBe('Payment Required');
+    expect(data.x402Version).toBe(2);
+    expect(data.error).toBe('Payment Required');
+    expect(data.accepts).toBeDefined();
+    expect(data.accepts).toHaveLength(1);
+    expect(data.accepts[0].scheme).toBe('exact');
+    expect(data.accepts[0].amount).toBeDefined();
+    expect(data.accepts[0].asset).toBeDefined();
+    expect(data.accepts[0].maxTimeoutSeconds).toBe(300);
   });
 
   test('creates registration job in database', async () => {
@@ -246,7 +277,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com' }),
     });
@@ -271,7 +302,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com' }),
     });
@@ -279,13 +310,12 @@ describe('POST /domains/register', () => {
     expect(response.status).toBe(402);
 
     const data: any = await response.json();
-    expect(data.type).toBe('error:insufficient_payment');
-    expect(data.title).toBe('Insufficient Payment');
-    expect(data.detail).toContain('13.18 USDC');
-    expect(data.detail).toContain('5.00 USDC');
+    expect(data.x402Version).toBe(2);
+    expect(data.error).toBe('Payment verification failed');
+    expect(data.reason).toContain('Insufficient');
   });
 
-  test('payment header decoding extracts wallet correctly', async () => {
+  test('payment settlement extracts wallet correctly', async () => {
     const testWallet = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1';
     const paymentHeader = createMockPaymentHeader(testWallet, 13.18);
 
@@ -293,13 +323,14 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com' }),
     });
 
     expect(response.status).toBe(202);
     const data: any = await response.json();
+    expect(data.payer).toBe(testWallet);
 
     // Verify job has correct wallet
     const job = sqlite.query('SELECT * FROM registration_jobs WHERE id = ?').get(data.jobId) as any;
@@ -313,7 +344,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com', targetUrl: 'ftp://evil.com' }),
     });
@@ -336,7 +367,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com', targetUrl: 'http://192.168.1.1' }),
     });
@@ -358,7 +389,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com', targetUrl: 'http://user:pass@example.com' }),
     });
@@ -380,7 +411,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com', targetUrl: 'https://example.com' }),
     });
@@ -399,7 +430,7 @@ describe('POST /domains/register', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'payment-signature': paymentHeader,
+        'x-payment': paymentHeader,
       },
       body: JSON.stringify({ domain: 'example.com' }),
     });
