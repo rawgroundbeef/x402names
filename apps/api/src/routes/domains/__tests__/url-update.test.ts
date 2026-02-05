@@ -242,6 +242,13 @@ describe('PATCH /domains/:name/url', () => {
     expect(data.accepts[0].scheme).toBe('exact');
     expect(data.accepts[0].amount).toBe('2000000');
     expect(data.accepts[0].maxTimeoutSeconds).toBe(300);
+
+    // Verify payment-required header is present and base64-encoded
+    const paymentRequiredHeader = response.headers.get('payment-required');
+    expect(paymentRequiredHeader).toBeDefined();
+    const decoded = JSON.parse(atob(paymentRequiredHeader!));
+    expect(decoded.x402Version).toBe(2);
+    expect(decoded.accepts).toHaveLength(1);
   });
 
   test('returns 402 for insufficient payment', async () => {
@@ -262,6 +269,10 @@ describe('PATCH /domains/:name/url', () => {
     expect(data.x402Version).toBe(2);
     expect(data.error).toBe('Payment verification failed');
     expect(data.reason).toContain('Insufficient');
+
+    // Verify payment-required header on verification failure too
+    const paymentRequiredHeader = response.headers.get('payment-required');
+    expect(paymentRequiredHeader).toBeDefined();
   });
 
   test('returns 403 when non-owner attempts to update', async () => {

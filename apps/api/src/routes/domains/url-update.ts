@@ -120,7 +120,7 @@ export function createUrlUpdateRoutes(
     const xPayment = c.req.header('x-payment');
 
     if (!xPayment) {
-      return c.json({
+      const paymentBody = {
         x402Version: 2,
         error: 'Payment Required',
         accepts: [{
@@ -135,7 +135,9 @@ export function createUrlUpdateRoutes(
           url: `${c.req.url}`,
           method: 'PATCH',
         },
-      }, 402);
+      };
+      c.header('payment-required', btoa(JSON.stringify(paymentBody)));
+      return c.json(paymentBody, 402);
     }
 
     // 5. Decode the payment payload
@@ -155,7 +157,7 @@ export function createUrlUpdateRoutes(
     // 6. Verify the payment (does NOT settle)
     const verifyResult = await facilitator.verify(paymentPayload, requirements);
     if (!verifyResult.isValid) {
-      return c.json({
+      const paymentBody = {
         x402Version: 2,
         error: 'Payment verification failed',
         reason: verifyResult.invalidReason,
@@ -167,7 +169,9 @@ export function createUrlUpdateRoutes(
           payTo: env.X402_RECEIVING_ADDRESS,
           maxTimeoutSeconds: 300,
         }],
-      }, 402);
+      };
+      c.header('payment-required', btoa(JSON.stringify(paymentBody)));
+      return c.json(paymentBody, 402);
     }
 
     // 7. Verify ownership — payer wallet must match domain owner

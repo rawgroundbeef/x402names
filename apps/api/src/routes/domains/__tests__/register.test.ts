@@ -268,6 +268,13 @@ describe('POST /domains/register', () => {
     expect(data.accepts[0].amount).toBeDefined();
     expect(data.accepts[0].asset).toBeDefined();
     expect(data.accepts[0].maxTimeoutSeconds).toBe(300);
+
+    // Verify payment-required header is present and base64-encoded
+    const paymentRequiredHeader = response.headers.get('payment-required');
+    expect(paymentRequiredHeader).toBeDefined();
+    const decoded = JSON.parse(atob(paymentRequiredHeader!));
+    expect(decoded.x402Version).toBe(2);
+    expect(decoded.accepts).toHaveLength(1);
   });
 
   test('creates registration job in database', async () => {
@@ -313,6 +320,10 @@ describe('POST /domains/register', () => {
     expect(data.x402Version).toBe(2);
     expect(data.error).toBe('Payment verification failed');
     expect(data.reason).toContain('Insufficient');
+
+    // Verify payment-required header on verification failure too
+    const paymentRequiredHeader = response.headers.get('payment-required');
+    expect(paymentRequiredHeader).toBeDefined();
   });
 
   test('payment settlement extracts wallet correctly', async () => {

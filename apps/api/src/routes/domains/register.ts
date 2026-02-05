@@ -177,7 +177,7 @@ export function createRegisterRoutes(
     const xPayment = c.req.header('x-payment');
 
     if (!xPayment) {
-      return c.json({
+      const paymentBody = {
         x402Version: 2,
         error: 'Payment Required',
         accepts: [{
@@ -192,7 +192,9 @@ export function createRegisterRoutes(
           url: `${c.req.url}`,
           method: 'POST',
         },
-      }, 402);
+      };
+      c.header('payment-required', btoa(JSON.stringify(paymentBody)));
+      return c.json(paymentBody, 402);
     }
 
     // 7. Decode the payment payload
@@ -212,7 +214,7 @@ export function createRegisterRoutes(
     // 8. Verify the payment (does NOT settle)
     const verifyResult = await facilitator.verify(paymentPayload, requirements);
     if (!verifyResult.isValid) {
-      return c.json({
+      const paymentBody = {
         x402Version: 2,
         error: 'Payment verification failed',
         reason: verifyResult.invalidReason,
@@ -224,7 +226,9 @@ export function createRegisterRoutes(
           payTo: env.X402_RECEIVING_ADDRESS,
           maxTimeoutSeconds: 300,
         }],
-      }, 402);
+      };
+      c.header('payment-required', btoa(JSON.stringify(paymentBody)));
+      return c.json(paymentBody, 402);
     }
 
     // 9. Idempotency check
